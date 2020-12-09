@@ -1,31 +1,32 @@
 {
-  "name": "automagic-ui",
+  "name": "automage",
   "version": "2.8.1",
-  "description": "Automagic ui driver for web interfaces",
+  "description": "Interact with DOM like a human.",
   "main": "index.js",
   "scripts": {
-    "watchTest": "watchify  -d ./tests -o ./tests/index-browser.js",
-    "test": "browserify tests -d -o tests/index-browser.js && xdg-open tests/index.html",
-    "build": "browserify tests -o tests/index-browser.js"
+    "test": "node test"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/MatthewLarner/automagic-ui.git"
-  },
-  "author": "Matt Larner <matt.larner.dev@gmail.com>",
   "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/MatthewLarner/automagic-ui/issues"
-  },
-  "homepage": "https://github.com/MatthewLarner/automagic-ui#readme",
   "dependencies": {
-    "predator": "^1.0.6",
-    "scroll-into-view": "^1.9.1",
-    "shuv": "^1.0.0"
+    "righto": "^6.1.3"
   },
   "devDependencies": {
     "browserify": "^12.0.1",
+    "jsdom": "^16.4.0",
     "tape": "^4.2.2",
     "watchify": "^3.11.1"
-  }
+  },
+  "directories": {
+    "test": "tests"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/KoryNunn/automage.git"
+  },
+  "keywords": [],
+  "author": "Kory Nunn <knunn187@gmail.com> (https://korynunn.com)",
+  "bugs": {
+    "url": "https://github.com/KoryNunn/automage/issues"
+  },
+  "homepage": "https://github.com/KoryNunn/automage#readme"
 }

@@ -1,5 +1,4 @@
-var predator = require('predator');
-var scrollIntoView = require('scroll-into-view');
+var righto = require('righto');
 var types = require('./elementTypes');
 
 // List of selectors ordered by their likeliness to be the target of text/click/value selection
@@ -7,17 +6,17 @@ var textWeighting = ['h1', 'h2', 'h3', 'h4', 'label', 'p', 'a', 'button', '[role
 var clickWeighting = ['button', '[role=button]', 'input', 'a', 'h1', 'h2', 'h3', 'h4', 'i', 'label'];
 var valueWeighting = ['input', 'textarea', 'select', '[contenteditable]', 'label'];
 
-var noElementOfType = 'no elements of type ',
-    documentScope,
-    windowScope,
-    runDelay,
-    keyPressDelay,
-    initialised;
+var noElementOfType = 'no elements of type ';
 
 var nonTextInputs = ['date', 'range', 'select'];
 
-function _pressKey(key, fullValue, done) {
-    var element = this.currentContext.activeElement;
+function getDocument(context){
+    return context.ownerDocument || (context.defaultView ? context : null);
+}
+
+function pressKey(context, key, fullValue, done) {
+    var defaultView = getDocument(context).defaultView;
+    var element = getDocument(context).activeElement;
 
     if(arguments.length < 3){
         done = fullValue;
@@ -25,17 +24,17 @@ function _pressKey(key, fullValue, done) {
     }
 
 
-    var keydownEvent = new windowScope.KeyboardEvent('keydown'),
-        keyupEvent = new windowScope.KeyboardEvent('keyup'),
-        keypressEvent = new windowScope.KeyboardEvent('keypress');
-        inputEvent = new windowScope.KeyboardEvent('input');
+    var keydownEvent = new defaultView.KeyboardEvent('keydown'),
+        keyupEvent = new defaultView.KeyboardEvent('keyup'),
+        keypressEvent = new defaultView.KeyboardEvent('keypress');
+        inputEvent = new defaultView.KeyboardEvent('input');
 
     var method = 'initKeyboardEvent' in keydownEvent ? 'initKeyboardEvent' : 'initKeyEvent';
 
-    keydownEvent[method]('keydown', true, true, windowScope, key, 3, true, false, true, false, false);
-    keypressEvent[method]('keypress', true, true, windowScope, key, 3, true, false, true, false, false);
-    inputEvent[method]('input', true, true, windowScope, key, 3, true, false, true, false, false);
-    keyupEvent[method]('keyup', true, true, windowScope, key, 3, true, false, true, false, false);
+    keydownEvent[method]('keydown', true, true, defaultView, key, 3, true, false, true, false, false);
+    keypressEvent[method]('keypress', true, true, defaultView, key, 3, true, false, true, false, false);
+    inputEvent[method]('input', true, true, defaultView, key, 3, true, false, true, false, false);
+    keyupEvent[method]('keyup', true, true, defaultView, key, 3, true, false, true, false, false);
 
     element.dispatchEvent(keydownEvent);
     element.value = fullValue;
@@ -43,49 +42,40 @@ function _pressKey(key, fullValue, done) {
     element.dispatchEvent(inputEvent);
     element.dispatchEvent(keyupEvent);
 
-    done(null, element);
+    return done ? done(null, element) : righto.from(element);
 }
 
-function _pressKeys(keys, done) {
-    var state = this;
-
+function pressKeys(context, keys, done) {
     function pressNextKey(keyIndex, callback){
         var nextKey = String(keys).charAt(keyIndex);
 
         if(nextKey === ''){
-            return callback(null, state.currentContext.activeElement);
+            return callback(null, getDocument(context).activeElement);
         }
 
-        _pressKey.call(state, nextKey, keys.slice(0, keyIndex + 1), function() {
+        pressKey(context, nextKey, keys.slice(0, keyIndex + 1), function() {
             setTimeout(function(){
                 pressNextKey(keyIndex + 1, callback);
-            }, state.keyPressDelay);
+            }, 10);
         });
     }
 
-    pressNextKey(0, done)
+    var keysPressed = righto(pressNextKey, 0);
+
+    return done ? keysPressed(done) : keysPressed;
 }
 
-function _navigate(location, previousElement, done) {
-    var callbackTimer;
+function typeInto(context, value, type, text, done) {
+    var focused = righto(focus, context, value, type);
+    var keysPressed = righto(pressKeys, context, text, righto.after(focused));
 
-    function handlewindowScopeError(error) {
-        clearTimeout(callbackTimer);
-
-        done(error);
-        windowScope.removeEventListener('error', handlewindowScopeError);
-    }
-
-    windowScope.addEventListener('error', handlewindowScopeError);
-    windowScope.location = location;
-
-    callbackTimer = setTimeout(done, 150);
+    return done ? keysPressed(done) : keysPressed;
 }
 
-function _getLocation(done) {
-    setTimeout(function() {
-        done(null, windowScope.location);
-    }, 500);
+function getLocation(context, done) {
+    var result = righto.from(getDocument(context).defaultView.location);
+
+    return done ? result(done) : result;
 }
 
 function checkMatchValue(targetValue, value){
@@ -96,17 +86,13 @@ function checkMatchValue(targetValue, value){
     return targetValue && targetValue.toLowerCase().trim() === value.toLowerCase();
 }
 
-function getElementVisibleText(element, ignoreViewport, domQueries){
+function getElementVisibleText(element){
     return Array.from(element.childNodes).map(node => {
         if(node.nodeType !== 3){
-            return getElementVisibleText(node, ignoreViewport, domQueries);
+            return getElementVisibleText(node);
         }
 
-        if(
-            node.textContent &&
-            domQueries.isVisible(element) &&
-            (ignoreViewport || !domQueries.isObscured(element))
-        ) {
+        if(node.textContent) {
             return node.textContent;
         }
 
@@ -128,20 +114,20 @@ function matchAttributes(element, value){
     }
 }
 
-function matchTextContent(element, value, ignoreViewport, domQueries){
+function matchTextContent(element, value){
     if(
         checkMatchValue(element.textContent, value) &&
-        checkMatchValue(getElementVisibleText(element, ignoreViewport, domQueries), value)
+        checkMatchValue(getElementVisibleText(element), value)
     ){
         return 1;
     }
 }
 
-function matchBesideLabels(element, value, ignoreViewport, domQueries){
+function matchBesideLabels(element, value){
     if(
         element.previousElementSibling &&
         element.previousElementSibling.matches(types.label.join()) &&
-        checkMatchValue(getElementVisibleText(element.previousElementSibling, ignoreViewport, domQueries), value)
+        checkMatchValue(getElementVisibleText(element.previousElementSibling), value)
     ) {
         return 4;
     }
@@ -151,11 +137,7 @@ function isTextNode(node){
     return node.nodeType === 3;
 }
 
-function matchDirectChildTextNodes(element, value, ignoreViewport, domQueries){
-    if(!ignoreViewport && domQueries.isObscured(element)){
-        return
-    }
-
+function matchDirectChildTextNodes(element, value){
     var directChildText = Array.from(element.childNodes)
         .filter(isTextNode)
         .map(textNode => textNode.textContent)
@@ -166,98 +148,52 @@ function matchDirectChildTextNodes(element, value, ignoreViewport, domQueries){
     }
 }
 
-function matchDecendentLabels(element, value, ignoreViewport, domQueries){
+function matchDecendentLabels(element, value){
     if(
         findMatchingElements(
             value,
             Array.from(element.childNodes).filter(node =>
                 node.matches &&
                 node.matches(types.label.join())
-            ),
-            ignoreViewport,
-            domQueries
+            )
         ).length
     ){
         return 3
     }
 }
 
-function matchLabelFor(element, value, ignoreViewport, domQueries){
+function matchLabelFor(element, value){
     var name = element.getAttribute('name');
 
     if(
         name &&
         findMatchingElements(
             value,
-            document.querySelectorAll('label[for="' + name + '"]'),
-            ignoreViewport,
-            domQueries
+            getDocument(element).querySelectorAll('label[for="' + name + '"]')
         ).length
     ){
         return 3
     }
 }
 
-function createCachedDomQueries(){
-    var isObscuredCache = new WeakMap();
-    var isVisibleCache = new WeakMap();
-
-    function isObscured(element){
-        if(isObscuredCache.has(element)){
-            return isObscuredCache.get(element);
-        }
-
-        isObscuredCache.set(element, predator(element).hidden);
-        return isObscured(element);
-    }
-
-    function isVisible(element){
-        if(isVisibleCache.has(element)){
-            return isVisibleCache.get(element)
-        }
-
-        if(element.getAttribute('aria-hidden') === 'true') {
-            return false;
-        }
-
-        var style = window.getComputedStyle(element);
-        isVisibleCache.set(element, style.visibility !== 'hidden' && style.display !== 'none');
-        return isVisible(element);
-    }
-
-    return {
-        isObscured,
-        isVisible
-    }
-}
-
-function matchElementValue(element, value, ignoreViewport, domQueries) {
-    if(!domQueries){
-        domQueries = createCachedDomQueries();
-    }
-
+function matchElementValue(element, value) {
     return (
         // This check is fast, so we optimize by checking it first
         matchAttributes(element, value) ||
-        domQueries.isVisible(element) &&
         (
-            matchTextContent(element, value, ignoreViewport, domQueries) ||
-            matchDirectChildTextNodes(element, value, ignoreViewport, domQueries) ||
-            matchLabelFor(element, value, ignoreViewport, domQueries) ||
-            matchDecendentLabels(element, value, ignoreViewport, domQueries) ||
-            matchBesideLabels(element, value, ignoreViewport, domQueries)
+            matchTextContent(element, value) ||
+            matchDirectChildTextNodes(element, value) ||
+            matchLabelFor(element, value) ||
+            matchDecendentLabels(element, value) ||
+            matchBesideLabels(element, value)
         )
     );
 }
 
-function findMatchingElements(value, elementsList, ignoreViewport, domQueries) {
-    if(!domQueries){
-        domQueries = createCachedDomQueries();
-    }
-
+function findMatchingElements(value, elementsList) {
     return Array.prototype.slice.call(elementsList)
         .map(function(element) {
-            var weighting = matchElementValue(element, value, ignoreViewport, domQueries);
+            var weighting = matchElementValue(element, value);
             if(weighting){
                 return [weighting, element]
             };
@@ -282,114 +218,86 @@ function getElementValueWeight(element) {
     return valueWeighting.length - (index < 0 ? Infinity : index);
 }
 
-function _findAllUi(value, type, ignoreViewport, done){
-    if(!type){
-        type = 'all';
-    }
-
+function findAll(context, value, type, done){
     var elementTypes = types[type];
 
-
-    if(!elementTypes) {
-        return done(new Error(type + ' is not a valid ui type'));
-    }
-
-    var elements = Array.from(this.currentContext.querySelectorAll(elementTypes))
-
-    if(!elements.length) {
-        return done(new Error(noElementOfType + type));
-    }
-
-    var results = findMatchingElements(value, elements, ignoreViewport)
-        .sort(function(a, b){
-            var aTypeIndex = elementTypes.findIndex(type => a.matches(type));
-            var bTypeIndex = elementTypes.findIndex(type => b.matches(type));
-            aTypeIndex = aTypeIndex < 0 ? Infinity : aTypeIndex;
-            bTypeIndex = bTypeIndex < 0 ? Infinity : bTypeIndex;
-            return aTypeIndex - bTypeIndex;
-        })
-        .sort(function(a, b){
-            return a.contains(b) ? 1 : b.contains(a) ? -1 : 0;
-        })
-
-    done(null, results);
-}
-
-function _findUi(value, type, returnArray, done) {
-    if(!done) {
-        done = returnArray;
-        returnArray = false;
-    }
-
-    _findAllUi.call(this, value, type, false, function(error, elements){
-        if(error){
-            return done(error);
+    var results = righto.from(null).get(() => {
+        if(!elementTypes) {
+            return righto.fail(new Error(type + ' is not a valid ui type'));
         }
 
+        var elements = Array.from(getDocument(context).querySelectorAll(elementTypes))
+
+        if(!elements.length) {
+            return righto.fail(new Error(noElementOfType + type));
+        }
+
+        return findMatchingElements(value, elements)
+            .sort(function(a, b){
+                var aTypeIndex = elementTypes.findIndex(type => a.matches(type));
+                var bTypeIndex = elementTypes.findIndex(type => b.matches(type));
+                aTypeIndex = aTypeIndex < 0 ? Infinity : aTypeIndex;
+                bTypeIndex = bTypeIndex < 0 ? Infinity : bTypeIndex;
+                return aTypeIndex - bTypeIndex;
+            })
+            .sort(function(a, b){
+                return a.contains(b) ? 1 : b.contains(a) ? -1 : 0;
+            })
+    })
+
+    return done ? results(done) : results;
+}
+
+function find(context, value, type, done) {
+    var elements = righto(findAll, context, value, type);
+
+    var result = elements.get(elements => {
         if(!elements.length){
-            return done(new Error('"' + value + '" was not found'));
+            return righto.fail(new Error('"' + value + '" was not found'));
         }
 
-        var results = Array.prototype.slice.call(elements)
-            .filter(function(element){
-                return !predator(element).hidden;
-            });
-
-        if(!results.length){
-            return done(new Error('"' + value + '" was found but not visible on screen'));
-        }
-
-        done(null, returnArray ? results : results.shift());
+        return elements;
     });
+
+    return done ? result(done) : result;
 }
 
-function _setValue(value, type, text, done) {
-    _focus.call(this, value, type, function(error, element) {
-        if(error){
-            return done(error);
+function get(context, value, type, done) {
+    var elements = righto(find, context, value, type);
+
+    var result = elements.get(elements => {
+        if(elements.length > 1) {
+            return righto.fail(new Error('More than one "' + value + '" was found'));
         }
 
-        element.value = text;
+        return elements[0]
+    })
 
-        done(null, element);
-    });
+    return done ? result(done) : result;
 }
 
-function _wait(time, done) {
+function setValue(value, type, text, done) {
+    var focused = righto(focus, context, value, type);
+    var valueSet = focused.get(target => {
+        target.value = text;
+        return target;
+    })
+
+    return done ? valueSet(done) : valueSet;
+}
+
+function wait(time, done) {
     setTimeout(done, time || 0);
 }
 
-function findClickable(currentContext, elements){
-    for(var i = 0; i < elements.length; i++){
-        var element = elements[i];
-            rect = element.getBoundingClientRect(),
-            clickElement = (
-                    currentContext.ownerDocument || // If context is a Node
-                    currentContext // If context is a Document
-                )
-                .elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2),
-            clickElementInElement = element.contains(clickElement),
-            elementInClickElement = clickElement.contains(element);
+function click(context, value, type, done) {
+    var clickTargets = righto(findAll, context, value, type);
+    var clickedElement = clickTargets.get(elements => {
+        var sorted = elements.sort(function(a, b) {
+            return getElementClickWeight(b) - getElementClickWeight(a);
+        })
 
-        if(clickElementInElement || elementInClickElement || clickElement === element){
-            return clickElement;
-        }
-    }
-}
-
-function executeClick(value, type, done) {
-    var state = this;
-    _findUi.call(state, value, type, true, function(error, elements) {
-        if(error) {
-            return done(error);
-        }
-
-        var clickableElements = elements
-            .sort(function(a, b) {
-                return getElementClickWeight(b) - getElementClickWeight(a);
-            });
-
-        var element = findClickable(state.currentContext, elements);
+        var element = sorted[0];
 
         if(!element) {
             return done(new Error('could not find clickable element matching "' + value + '"'));
@@ -414,19 +322,16 @@ function executeClick(value, type, done) {
             element.focus();
         }
 
-        setTimeout(function(){
-            done(null, element);
-        }, clickDelay)
-
+        return element;
     });
+
+    return done ? clickedElement(done) : clickedElement;
 }
 
-function _focus(value, type, done) {
-   _findUi.call(this, value, type, true, function(error, elements){
-        if(error){
-            return done(error);
-        }
+function focus(context, value, type, done) {
+   var elements = righto(findAll, context, value, type)
 
+   var focuesdElement = elements.get(elements => {
         var result = elements
             .sort(function(a, b) {
                 return getElementValueWeight(b) - getElementValueWeight(a);
@@ -435,20 +340,19 @@ function _focus(value, type, done) {
 
         result.focus();
 
-        done(null, result);
+        return result;
    });
+
+    return done ? focuesdElement(done) : focuesdElement;
 }
 
-function _changeContenteditableValue(element, text, done){
-    element.innerHTML = text;
-    done(null, element);
-}
+function changeInputValue(element, value, done){
+    var defaultView = getDocument(element).defaultView;
 
-function _changeInputValue(element, value, done){
-    var inputEvent = new windowScope.KeyboardEvent('input');
+    var inputEvent = new defaultView.KeyboardEvent('input');
     var method = 'initKeyboardEvent' in inputEvent ? 'initKeyboardEvent' : 'initKeyEvent';
 
-    inputEvent[method]('input', true, true, windowScope, null, 3, true, false, true, false, false);
+    inputEvent[method]('input', true, true, defaultView, null, 3, true, false, true, false, false);
     element.value = value;
 
     element.dispatchEvent(inputEvent);
@@ -478,7 +382,7 @@ function encodeDateValue(date){
 
 function encodeSelectValue(label, element){
     var selectedOption = Array.from(element.querySelectorAll('option'))
-        .find(option => matchElementValue(option, label, true));
+        .find(option => matchElementValue(option, label));
 
     return selectedOption ? selectedOption.value : label;
 }
@@ -490,7 +394,7 @@ var typeEncoders = {
 
 function changeNonTextInput(element, text, done){
     if(element.hasAttribute('contenteditable')){
-        return _changeContenteditableValue(element, text, done)
+        return changeContenteditableValue(element, text, done)
     }
 
     var value = null;
@@ -500,13 +404,12 @@ function changeNonTextInput(element, text, done){
     } else {
         value = text;
     }
-    return _changeInputValue(element, value, done);
+    return changeInputValue(element, value, done);
 }
 
-function _changeValue(value, type, text, done) {
-    var state = this;
+function changeValue(context, value, type, text, done) {
 
-    _focus.call(state, value, type, function(error, element) {
+    focus(context, value, type, function(error, element) {
         if(error){
             return done(error);
         }
@@ -519,7 +422,7 @@ function _changeValue(value, type, text, done) {
             return changeNonTextInput(element, text, done);
         }
 
-        _pressKeys.call(state, text, function(error){
+        pressKeys(context, text, function(error){
             if(error){
                 return done(error);
             }
@@ -535,239 +438,56 @@ function _changeValue(value, type, text, done) {
     });
 }
 
-function _clear(value, type, done){
-    var context = this;
-    _focus.call(context, value, type, function(error, element) {
-        var element = context.currentContext.activeElement;
-        element.value = null;
-        done(null, element);
-    });
-}
-
-function _getValue(value, type, done) {
-    _focus.call(this, value, type, function(error, element) {
-        if(error){
-            return done(error);
-        }
-
-        done(null, 'value' in element ? element.value : element.textContent);
-    });
-}
-
-function _blur(done) {
-    var element = this.currentContext.activeElement;
-    element.blur();
-
-    done(null, element);
-}
-
-function _scrollTo(value, type, done){
-    _findAllUi.call(this, value, type, true, function(error, elements) {
-        if(error) {
-            return done(error);
-        }
-
-        if(!elements.length){
-            return done(new Error('"' + value + '" was not found'));
-        }
-
-        var targetElement = elements.shift();
-
-        scrollIntoView(targetElement, { time: 50 }, function(){
-            done(null, targetElement);
+function blur(context, done) {
+    var result = righto.from(null)
+        .get(() => {
+            var element = getDocument(context).activeElement;
+            element.blur();
+            return element
         });
-    });
+
+    return done ? result(done) : result;
 }
 
-function _waitFor(value, type, timeout, done){
-    var context = this;
+function waitFor(context, value, type, timeout, done){
     var startTime = Date.now();
 
-    if(!timeout){
-        timeout = 3000;
-    }
+    function retry(done){
 
-    function retry(){
-        if(Date.now() - startTime > timeout){
-            return done(new Error('Timeout finding ' + value));
-        }
-
-        _findUi.call(context, value, type, true, function(error, elements){
-            if(error){
-                window.requestAnimationFrame(() => retry(), 10);
-                return;
-            }
-
-            done(null, elements[0]);
-        });
-    }
-
-    retry();
-}
-
-function runTasks(state, tasks, callback) {
-    if(tasks.length) {
-        tasks.shift()(function(error, result) {
-            if(error) {
-                return callback(error);
-            } else {
-                state.lastResult = result;
-
-                if(tasks.length === 0) {
-                    callback(null, result);
-                } else {
-                    runTasks(state, tasks, callback);
+        var foundElements = righto.handle(righto(get, context, value, type), (error, done) => done()).get(element => {
+            if(!element){
+                if(Date.now() - startTime > timeout){
+                    return righto.fail(new Error('Timeout finding ' + value));
                 }
+
+                var wait = righto(done => setTimeout(done, 10));
+
+                return righto(retry, righto.after(wait));
             }
+
+            return element;
         });
-    }
-}
 
-function driveUi(currentContext){
-    var tasks = [],
-        driverFunctions = {},
-        state = {
-            currentContext: currentContext || documentScope
-        };
-
-    function addTask(task){
-        tasks.push(task);
-
-        return driverFunctions;
+        foundElements(done);
     }
 
-    driverFunctions = {
-        navigate: function(location){
-            return addTask(_navigate.bind(state, location));
-        },
-        findUi: function(value, type){
-            return addTask(_findUi.bind(state, value, type));
-        },
-        getLocation: function() {
-            return addTask(_getLocation.bind(state));
-        },
-        focus: function(value, type) {
-            return addTask(_focus.bind(state, value, type));
-        },
-        blur: function() {
-            return addTask(_blur.bind(state));
-        },
-        click: function(value, type){
-            return addTask(executeClick.bind(state, value, type));
-        },
-        pressKey: function(value) {
-            return addTask(_pressKey.bind(state, value));
-        },
-        pressKeys: function(value) {
-            return addTask(_pressKeys.bind(state, value));
-        },
-        clear: function(value, type) {
-            return addTask(_clear.bind(state, value, type));
-        },
-        changeValue: function(value, type, text) {
-            if(arguments.length < 3){
-                done = text;
-                text = type;
-                type = null;
-            }
-            return addTask(_changeValue.bind(state, value, type, text));
-        },
-        setValue: function(value, type, text) {
-            if(arguments.length < 3){
-                done = text;
-                text = type;
-                type = null;
-            }
-            return addTask(_setValue.bind(state, value, type, text));
-        },
-        getValue: function(value, type) {
-            return addTask(_getValue.bind(state, value, type));
-        },
-        wait: function(time) {
-            if(!arguments.length) {
-                time = runDelay;
-            }
+    var result = righto(retry);
 
-            return addTask(_wait.bind(state, time));
-        },
-        do: function(driver){
-            return addTask(driver.go);
-        },
-        if: function(value, type, addSubTasks){
-            if(arguments.length < 3) {
-                addSubTasks = type;
-                type = null;
-            }
-
-            return addTask(function(done){
-                _findUi.call(state, value, type, function(error, element){
-                    if(error){
-                        return done();
-                    }
-
-                    var newDriver = driveUi();
-
-                    addSubTasks(newDriver);
-
-                    newDriver.go(done);
-                });
-            });
-        },
-        in: function(value, type, addSubTasks){
-            return addTask(function(done){
-                _findUi.call(state, value, type, function(error, element){
-                    if(error){
-                        return done(error);
-                    }
-
-                    var newDriver = driveUi(element);
-
-                    addSubTasks(newDriver);
-
-                    newDriver.go(done);
-                });
-            });
-        },
-        check: function(task){
-            return addTask(function(callback){
-                task(state.lastResult, callback);
-            });
-        },
-        scrollTo: function(value, type){
-            return addTask(_scrollTo.bind(state, value, type));
-        },
-        waitFor: function(value, type, timeout){
-            if(arguments.length < 3){
-                timeout = type;
-                type = null;
-            }
-            return addTask(_waitFor.bind(state, value, type, timeout));
-        },
-        go: function(callback) {
-            if(!initialised) {
-                throw(new Error('init must becalled before calling go'));
-            }
-
-            if(tasks.length) {
-                tasks.unshift(_wait.bind(state, runDelay));
-                runTasks(state, tasks, callback);
-            } else {
-                callback(new Error('No tasks defined'));
-            }
-        }
-    };
-
-    return driverFunctions;
+    return done ? result(done) : result;
 }
 
-driveUi.init = function(settings) {
-    documentScope = settings.document || document;
-    windowScope = settings.window || window;
-    runDelay = settings.runDelay || 0;
-    clickDelay = settings.clickDelay || 100;
-    keyPressDelay = settings.keyPressDelay || 50;
-
-    initialised = true;
+module.exports = {
+    pressKey,
+    pressKeys,
+    getLocation,
+    findAll,
+    find,
+    get,
+    click,
+    typeInto,
+    focus,
+    changeInputValue,
+    changeValue,
+    blur,
+    waitFor
 };
-
-module.exports = driveUi;
