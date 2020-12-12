@@ -34,6 +34,10 @@ await automage.click(document.body, 'I make UI eventually', 'button');
 var newHeading = await automage.waitFor(document.body, 'New Async UI', 'heading', 1000);
 ```
 
+## Full documentation
+
+[./doc.md](./doc.md)
+
 ## Philosophy
 
 automage acts like a human tester, you described things like you would describe them to a human.
