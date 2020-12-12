@@ -14,15 +14,21 @@ function getDocument(context){
     return context.ownerDocument || (context.defaultView ? context : null);
 }
 
-function pressKey(context, key, fullValue, done) {
+function getFocusedElement(context, callback) {
+    const focusedElement = getDocument(context).activeElement;
+
+    return callback ? callback(null, focusedElement) : righto.from(focusedElement);
+}
+
+function pressKey(context, key, fullValue, callback) {
+    key = key.slice(0, 1);
     var defaultView = getDocument(context).defaultView;
     var element = getDocument(context).activeElement;
 
     if(arguments.length < 3){
-        done = fullValue;
-        fullValue = element.value + key;
+        callback = fullValue;
+        fullValue = (element.value || '') + key;
     }
-
 
     var keydownEvent = new defaultView.KeyboardEvent('keydown'),
         keyupEvent = new defaultView.KeyboardEvent('keyup'),
@@ -37,15 +43,17 @@ function pressKey(context, key, fullValue, done) {
     keyupEvent[method]('keyup', true, true, defaultView, key, 3, true, false, true, false, false);
 
     element.dispatchEvent(keydownEvent);
-    element.value = fullValue;
+    if ('value' in element) {
+        element.value = fullValue;
+    }
     element.dispatchEvent(keypressEvent);
     element.dispatchEvent(inputEvent);
     element.dispatchEvent(keyupEvent);
 
-    return done ? done(null, element) : righto.from(element);
+    return callback ? callback(null, element) : righto.from(element);
 }
 
-function pressKeys(context, keys, done) {
+function pressKeys(context, keys, callback) {
     function pressNextKey(keyIndex, callback){
         var nextKey = String(keys).charAt(keyIndex);
 
@@ -62,20 +70,14 @@ function pressKeys(context, keys, done) {
 
     var keysPressed = righto(pressNextKey, 0);
 
-    return done ? keysPressed(done) : keysPressed;
+    return callback ? keysPressed(callback) : keysPressed;
 }
 
-function typeInto(context, value, type, text, done) {
+function typeInto(context, value, type, text, callback) {
     var focused = righto(focus, context, value, type);
     var keysPressed = righto(pressKeys, context, text, righto.after(focused));
 
-    return done ? keysPressed(done) : keysPressed;
-}
-
-function getLocation(context, done) {
-    var result = righto.from(getDocument(context).defaultView.location);
-
-    return done ? result(done) : result;
+    return callback ? keysPressed(callback) : keysPressed;
 }
 
 function checkMatchValue(targetValue, value){
@@ -218,7 +220,7 @@ function getElementValueWeight(element) {
     return valueWeighting.length - (index < 0 ? Infinity : index);
 }
 
-function findAll(context, value, type, done){
+function findAll(context, value, type, callback){
     var elementTypes = types[type];
 
     var results = righto.from(null).get(() => {
@@ -245,52 +247,52 @@ function findAll(context, value, type, done){
             })
     })
 
-    return done ? results(done) : results;
+    return callback ? results(callback) : results;
 }
 
-function find(context, value, type, done) {
+function find(context, value, type, callback) {
     var elements = righto(findAll, context, value, type);
 
     var result = elements.get(elements => {
         if(!elements.length){
-            return righto.fail(new Error('"' + value + '" was not found'));
+            return righto.fail(new Error('element was not found matching "' + value + '"'));
         }
 
         return elements;
     });
 
-    return done ? result(done) : result;
+    return callback ? result(callback) : result;
 }
 
-function get(context, value, type, done) {
+function get(context, value, type, callback) {
     var elements = righto(find, context, value, type);
 
     var result = elements.get(elements => {
         if(elements.length > 1) {
-            return righto.fail(new Error('More than one "' + value + '" was found'));
+            return righto.fail(new Error('More than one element was found matching "' + value + '"'));
         }
 
         return elements[0]
     })
 
-    return done ? result(done) : result;
+    return callback ? result(callback) : result;
 }
 
-function setValue(value, type, text, done) {
+function setValue(value, type, text, callback) {
     var focused = righto(focus, context, value, type);
     var valueSet = focused.get(target => {
         target.value = text;
         return target;
     })
 
-    return done ? valueSet(done) : valueSet;
+    return callback ? valueSet(callback) : valueSet;
 }
 
-function wait(time, done) {
-    setTimeout(done, time || 0);
+function wait(time, callback) {
+    setTimeout(callback, time || 0);
 }
 
-function click(context, value, type, done) {
+function click(context, value, type, callback) {
     var clickTargets = righto(findAll, context, value, type);
     var clickedElement = clickTargets.get(elements => {
         var sorted = elements.sort(function(a, b) {
@@ -300,7 +302,7 @@ function click(context, value, type, done) {
         var element = sorted[0];
 
         if(!element) {
-            return done(new Error('could not find clickable element matching "' + value + '"'));
+            return righto.fail(new Error('could not find clickable element matching "' + value + '"'));
         }
 
         // SVG paths
@@ -325,10 +327,10 @@ function click(context, value, type, done) {
         return element;
     });
 
-    return done ? clickedElement(done) : clickedElement;
+    return callback ? clickedElement(callback) : clickedElement;
 }
 
-function focus(context, value, type, done) {
+function focus(context, value, type, callback) {
    var elements = righto(findAll, context, value, type)
 
    var focuesdElement = elements.get(elements => {
@@ -338,15 +340,19 @@ function focus(context, value, type, done) {
             })
             .shift();
 
+        if(!result) {
+            return righto.fail(new Error('element was not found matching "' + value + '"'));
+        }
+
         result.focus();
 
         return result;
    });
 
-    return done ? focuesdElement(done) : focuesdElement;
+    return callback ? focuesdElement(callback) : focuesdElement;
 }
 
-function changeInputValue(element, value, done){
+function changeInputValue(element, value, callback){
     var defaultView = getDocument(element).defaultView;
 
     var inputEvent = new defaultView.KeyboardEvent('input');
@@ -362,7 +368,7 @@ function changeInputValue(element, value, done){
     changeEvent.initEvent('change', false, true);
     element.dispatchEvent(changeEvent);
 
-    done(null, element);
+    callback(null, element);
 }
 
 function encodeDateValue(date){
@@ -392,9 +398,9 @@ var typeEncoders = {
     'select-one': encodeSelectValue
 };
 
-function changeNonTextInput(element, text, done){
+function changeNonTextInput(element, text, callback){
     if(element.hasAttribute('contenteditable')){
-        return changeContenteditableValue(element, text, done)
+        return changeContenteditableValue(element, text, callback)
     }
 
     var value = null;
@@ -404,14 +410,13 @@ function changeNonTextInput(element, text, done){
     } else {
         value = text;
     }
-    return changeInputValue(element, value, done);
+    return changeInputValue(element, value, callback);
 }
 
-function changeValue(context, value, type, text, done) {
-
+function changeValue(context, value, type, text, callback) {
     focus(context, value, type, function(error, element) {
         if(error){
-            return done(error);
+            return callback(error);
         }
 
         if(
@@ -419,12 +424,12 @@ function changeValue(context, value, type, text, done) {
             element.nodeName === 'SELECT' ||
             element.hasAttribute('contenteditable')
         ){
-            return changeNonTextInput(element, text, done);
+            return changeNonTextInput(element, text, callback);
         }
 
         pressKeys(context, text, function(error){
             if(error){
-                return done(error);
+                return callback(error);
             }
 
             element.blur();
@@ -433,34 +438,32 @@ function changeValue(context, value, type, text, done) {
             changeEvent.initEvent('change', false, true);
             element.dispatchEvent(changeEvent);
 
-            done(null, element);
+            callback(null, element);
         });
     });
 }
 
-function blur(context, done) {
-    var result = righto.from(null)
-        .get(() => {
-            var element = getDocument(context).activeElement;
+function blur(context, callback) {
+    var result = righto(getFocusedElement, context)
+        .get(element => {
             element.blur();
             return element
         });
 
-    return done ? result(done) : result;
+    return callback ? result(callback) : result;
 }
 
-function waitFor(context, value, type, timeout, done){
+function waitFor(context, value, type, timeout, callback){
     var startTime = Date.now();
 
-    function retry(done){
-
-        var foundElements = righto.handle(righto(get, context, value, type), (error, done) => done()).get(element => {
+    function retry(callback){
+        var foundElements = righto.handle(righto(get, context, value, type), (error, callback) => callback()).get(element => {
             if(!element){
                 if(Date.now() - startTime > timeout){
-                    return righto.fail(new Error('Timeout finding ' + value));
+                    return righto.fail(new Error(`Timed out attempting to find element matching "${value}"`));
                 }
 
-                var wait = righto(done => setTimeout(done, 10));
+                var wait = righto(callback => setTimeout(callback, 10));
 
                 return righto(retry, righto.after(wait));
             }
@@ -468,23 +471,23 @@ function waitFor(context, value, type, timeout, done){
             return element;
         });
 
-        foundElements(done);
+        foundElements(callback);
     }
 
     var result = righto(retry);
 
-    return done ? result(done) : result;
+    return callback ? result(callback) : result;
 }
 
 module.exports = {
     pressKey,
     pressKeys,
-    getLocation,
     findAll,
     find,
     get,
     click,
     typeInto,
+    getFocusedElement,
     focus,
     changeInputValue,
     changeValue,
