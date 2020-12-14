@@ -4,9 +4,9 @@
 ```
 automage.pressKey // press a key
 automage.pressKeys // press many keys
-automage.findAll // find all matching elements with a semantic selector
-automage.find // find the first matching element with a semantic selector
-automage.get // find exactly one matching element with a semantic selector
+automage.findAll // find all matching elements with a semantic selector sorted by type
+automage.find // find all matching element with a semantic selector and matching type
+automage.get // find exactly one matching element with a semantic selector and matching type
 automage.click // click exactly one matching element with a semantic selector
 automage.typeInto // type into exactly one matching element with a semantic selector
 automage.getFocusedElement // get the element that currently has focus in the document
@@ -38,6 +38,17 @@ try {
 } catch (error) {
     error.message === 'element was not found matching "I don\'t exist"' 
 }
+```
+
+
+## automage.get - select the semantically correct element where multiple matched elements are part of the same component
+
+```
+var window = await loadWindow();
+
+var field = await automage.get(window.document.body, 'Some Field', 'field');
+
+field.tagName === 'INPUT' // input field was returned
 ```
 
 

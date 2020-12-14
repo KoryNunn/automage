@@ -16,9 +16,9 @@ test('automage - available methods', async t => {
 
     t.ok(automage.pressKey, 'press a key');
     t.ok(automage.pressKeys, 'press many keys');
-    t.ok(automage.findAll, 'find all matching elements with a semantic selector');
-    t.ok(automage.find, 'find the first matching element with a semantic selector');
-    t.ok(automage.get, 'find exactly one matching element with a semantic selector');
+    t.ok(automage.findAll, 'find all matching elements with a semantic selector sorted by type');
+    t.ok(automage.find, 'find all matching element with a semantic selector and matching type');
+    t.ok(automage.get, 'find exactly one matching element with a semantic selector and matching type');
     t.ok(automage.click, 'click exactly one matching element with a semantic selector');
     t.ok(automage.typeInto, 'type into exactly one matching element with a semantic selector');
     t.ok(automage.getFocusedElement, 'get the element that currently has focus in the document');
@@ -48,6 +48,16 @@ test('automage.get - if a single matching element isn\'t found, an error is thro
     } catch (error) {
         t.equal(error.message, 'element was not found matching "I don\'t exist"');
     }
+});
+
+test('automage.get - select the semantically correct element where multiple matched elements are part of the same component', async t => {
+    t.plan(1);
+
+    var window = await loadWindow();
+
+    var field = await automage.get(window.document.body, 'Some Field', 'field');
+
+    t.equal(field.tagName, 'INPUT', 'input field was returned');
 });
 
 test('automage.click - click a button', async t => {

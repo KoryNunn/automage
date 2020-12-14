@@ -228,7 +228,12 @@ function findAll(context, description, type, callback){
             return righto.fail(new Error(type + ' is not a valid ui type'));
         }
 
-        var elements = Array.from(getDocument(context).querySelectorAll(elementTypes))
+        var elements = Array.from(
+                getDocument(context).querySelectorAll(elementTypes)
+            )
+            .filter(element =>
+                !element.closest('[hidden]')
+            )
 
         if(!elements.length) {
             return righto.fail(new Error(noElementOfType + type));
@@ -252,28 +257,45 @@ function findAll(context, description, type, callback){
 
 function find(context, description, type, callback) {
     var elements = righto(findAll, context, description, type);
+    var elementTypes = types[type];
 
     var result = elements.get(elements => {
         if(!elements.length){
             return righto.fail(new Error('element was not found matching "' + description + '"'));
         }
 
-        return elements;
+        return elements.filter(element => element.matches(elementTypes));
     });
 
     return callback ? result(callback) : result;
 }
 
-function get(context, description, type, callback) {
-    var elements = righto(find, context, description, type);
-
-    var result = elements.get(elements => {
-        if(elements.length > 1) {
-            return righto.fail(new Error('More than one element was found matching "' + description + '"'));
+function filterComponents(elementTypes, elements){
+    return elementTypes.reduce((result, nextType) => {
+        if(result.length) {
+            return result;
         }
 
-        return elements[0]
-    })
+        return elements.filter(element => element.matches(nextType));
+    }, [])
+}
+
+function get(context, description, type, callback) {
+    var elements = righto(find, context, description, type);
+    var elementTypes = types[type];
+    debugger
+    var result = elements
+        .get(filterComponents.bind(null, elementTypes))
+        .get(elements => {
+            if(elements.length > 1) {
+                return righto.fail(new Error('More than one element was found matching "' + description + '"'));
+            }
+            if(!elements.length){
+                return righto.fail(new Error('element was not found matching "' + description + '"'));
+            }
+
+            return elements[0];
+        })
 
     return callback ? result(callback) : result;
 }
@@ -455,6 +477,10 @@ function blur(context, callback) {
 
 function waitFor(context, description, type, timeout, callback){
     var startTime = Date.now();
+
+    if(isNaN(timeout)) {
+        throw new Error(`waitFor must be a passed a Timeout`);
+    }
 
     function retry(callback){
         var foundElements = righto.handle(righto(get, context, description, type), (error, callback) => callback()).get(element => {
