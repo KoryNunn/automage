@@ -46,7 +46,7 @@ test('automage.get - if a single matching element isn\'t found, an error is thro
     try {
         await automage.get(window.document.body, 'I don\'t exist', 'heading');
     } catch (error) {
-        t.equal(error.message, 'element was not found matching "I don\'t exist"');
+        t.equal(error.message, 'heading was not found matching "I don\'t exist"');
     }
 });
 
@@ -80,7 +80,7 @@ test('automage.click - if a single matching element isn\'t found, an error is th
     try {
         await automage.click(window.document.body, 'I don\'t exist', 'button');
     } catch (error) {
-        t.equal(error.message, 'could not find clickable element matching "I don\'t exist"');
+        t.equal(error.message, 'Could not find clickable button matching "I don\'t exist"');
     }
 });
 
@@ -102,7 +102,7 @@ test('automage.typeInto - if a single matching element isn\'t found, an error is
     try {
         await automage.typeInto(window.document.body, 'I don\'t exist', 'field', 'some text');
     } catch (error) {
-        t.equal(error.message, 'element was not found matching "I don\'t exist"');
+        t.equal(error.message, 'field was not found matching "I don\'t exist"');
     }
 });
 
@@ -125,7 +125,7 @@ test('automage.waitFor - if a matching element isn\'t found within the timeout, 
     try {
         await automage.waitFor(window.document.body, 'New Async UI', 'heading', 100);
     } catch (error) {
-        t.equal(error.message, 'Timed out attempting to find element matching "New Async UI"');
+        t.equal(error.message, 'Timed out attempting to find heading matching "New Async UI"');
     }
 });
 

@@ -51,3 +51,7 @@ Muliple reasons:
  - Users can't see DOM attributes, you woudln't say "Click .foo[bar=3] > *:first-child" to a person.
  - The DOM structure of your application is not coupled to it's usability. When tests use dom-selectors to assert things, they break when the implementation changes, and they often continue to pass even when the UI is broken. If you set a button to `display: none`, a person cannot click it, but your tests will still pass.
  - If you can't target an element by semantic labels, you need to improve your application.
+
+## Debug output
+
+Debug output can be turned on by setting `automage.debug = true`

@@ -20,5 +20,5 @@ module.exports = {
     'list': ['ul', 'ol', '[role=list]'],
     'navigation': ['[role=navigation]'],
     'all': ['*'],
-    'text': ['*']
+    'text': ['p', 'section', 'article', 'aside', 'header', 'footer', 'span', 'div', '*']
 };

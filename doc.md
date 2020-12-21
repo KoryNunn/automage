@@ -36,7 +36,7 @@ var window = await loadWindow();
 try {
     await automage.get(window.document.body, 'I don\'t exist', 'heading');
 } catch (error) {
-    error.message === 'element was not found matching "I don\'t exist"' 
+    error.message === 'heading was not found matching "I don\'t exist"' 
 }
 ```
 
@@ -73,7 +73,7 @@ var window = await loadWindow();
 try {
     await automage.click(window.document.body, 'I don\'t exist', 'button');
 } catch (error) {
-    error.message === 'could not find clickable element matching "I don\'t exist"' 
+    error.message === 'Could not find clickable button matching "I don\'t exist"' 
 }
 ```
 
@@ -97,7 +97,7 @@ var window = await loadWindow();
 try {
     await automage.typeInto(window.document.body, 'I don\'t exist', 'field', 'some text');
 } catch (error) {
-    error.message === 'element was not found matching "I don\'t exist"' 
+    error.message === 'field was not found matching "I don\'t exist"' 
 }
 ```
 
@@ -122,7 +122,7 @@ var window = await loadWindow();
 try {
     await automage.waitFor(window.document.body, 'New Async UI', 'heading', 100);
 } catch (error) {
-    error.message === 'Timed out attempting to find element matching "New Async UI"' 
+    error.message === 'Timed out attempting to find heading matching "New Async UI"' 
 }
 ```
 
