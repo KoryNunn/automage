@@ -10,6 +10,8 @@ Interact with DOM like a human.
 var automage = require('automage');
 ```
 
+Methods generally accept the arguments (target <Dom node>, description <string|RegExp>, type <string [ElementType](./elementTypes.js)>, callback)
+
 ## select a heading
 
 ```javascript

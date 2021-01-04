@@ -28,6 +28,17 @@ pageHeading // Page heading was found
 ```
 
 
+## automage.get - select a heading by regex match
+
+```
+var window = await loadWindow();
+
+var pageHeading = await automage.get(window.document.body, /My/, 'heading');
+
+pageHeading // Page heading was found
+```
+
+
 ## automage.get - if a single matching element isn\'t found, an error is thrown
 
 ```
@@ -36,7 +47,7 @@ var window = await loadWindow();
 try {
     await automage.get(window.document.body, 'I don\'t exist', 'heading');
 } catch (error) {
-    error.message === 'heading was not found matching "I don\'t exist"' 
+    error.message === 'heading was not found matching "I don\'t exist"'
 }
 ```
 
@@ -73,7 +84,7 @@ var window = await loadWindow();
 try {
     await automage.click(window.document.body, 'I don\'t exist', 'button');
 } catch (error) {
-    error.message === 'Could not find clickable button matching "I don\'t exist"' 
+    error.message === 'Could not find clickable button matching "I don\'t exist"'
 }
 ```
 
@@ -97,7 +108,7 @@ var window = await loadWindow();
 try {
     await automage.typeInto(window.document.body, 'I don\'t exist', 'field', 'some text');
 } catch (error) {
-    error.message === 'field was not found matching "I don\'t exist"' 
+    error.message === 'field was not found matching "I don\'t exist"'
 }
 ```
 
@@ -122,7 +133,7 @@ var window = await loadWindow();
 try {
     await automage.waitFor(window.document.body, 'New Async UI', 'heading', 100);
 } catch (error) {
-    error.message === 'Timed out attempting to find heading matching "New Async UI"' 
+    error.message === 'Timed out attempting to find heading matching "New Async UI"'
 }
 ```
 
