@@ -235,7 +235,7 @@ function findAll(context, description, type, callback){
         }
 
         var elements = Array.from(
-                getDocument(context).querySelectorAll(elementTypes)
+                context.querySelectorAll(elementTypes)
             )
             .filter(element =>
                 !element.closest('[hidden]')
