@@ -38,6 +38,16 @@ test('automage.get - select a heading', async t => {
     t.ok(pageHeading, 'Page heading was found');
 });
 
+test('automage.get - select some text', async t => {
+    t.plan(1);
+
+    var window = await loadWindow();
+
+    var pageHeading = await automage.get(window.document.body, 'My test page', 'text');
+
+    t.ok(pageHeading, 'Page heading was found');
+});
+
 test('automage.get - select a heading by regex match', async t => {
     t.plan(1);
 

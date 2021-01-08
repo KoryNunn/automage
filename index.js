@@ -205,7 +205,7 @@ function findMatchingElements(description, elementsList) {
         })
         .filter(result => result)
         .sort((a, b) => a[0] - b[0])
-        .map(result => result [1]);
+        .map(result => result[1]);
 }
 
 function getElementTextWeight(element) {
@@ -254,8 +254,14 @@ function findAll(context, description, type, callback){
                 return aTypeIndex - bTypeIndex;
             })
             .sort(function(a, b){
-                return a.contains(b) ? 1 : b.contains(a) ? -1 : 0;
-            })
+                return a.compareDocumentPosition(b) & 2 ? -1 : 1;
+            }).reduce((results, nextElement) => {
+                if(results.some(element => nextElement.contains(element))) {
+                    return results;
+                }
+
+                return results.concat(nextElement);
+            }, []);
     })
 
     return callback ? results(callback) : results;
