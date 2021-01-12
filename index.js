@@ -97,7 +97,7 @@ function getElementVisibleText(element){
             return getElementVisibleText(node);
         }
 
-        if(node.textContent) {
+        if(node.textContent && !node.parentElement.closest('[hidden]')) {
             return node.textContent;
         }
 
@@ -143,6 +143,10 @@ function isTextNode(node){
 }
 
 function matchDirectChildTextNodes(element, description){
+    if(element.closest('[hidden]')){
+        return;
+    }
+
     var directChildText = Array.from(element.childNodes)
         .filter(isTextNode)
         .map(textNode => textNode.textContent)
@@ -157,10 +161,12 @@ function matchDecendentLabels(element, description){
     if(
         findMatchingElements(
             description,
-            Array.from(element.childNodes).filter(node =>
-                node.matches &&
-                node.matches(types.label.join())
-            )
+            Array.from(element.children)
+                .filter(node =>
+                    !node.closest('[hidden]') &&
+                    node.matches &&
+                    node.matches(types.label.join())
+                )
         ).length
     ){
         return 3
@@ -174,7 +180,9 @@ function matchLabelFor(element, description){
         name &&
         findMatchingElements(
             description,
-            getDocument(element).querySelectorAll(`label[for="${name}"]`)
+            Array.from(getDocument(element).querySelectorAll(`label[for="${name}"]`))
+                .filter(node => !node.closest('[hidden]')
+                )
         ).length
     ){
         return 3

@@ -48,6 +48,30 @@ test('automage.get - select some text', async t => {
     t.ok(pageHeading, 'Page heading was found');
 });
 
+test('automage.get - cant select text within a [hidden]', async t => {
+    t.plan(1);
+
+    var window = await loadWindow();
+
+    try {
+        await automage.get(window.document.body, 'My hidden text', 'text');
+    } catch (error) {
+        t.equal(error.message, 'text was not found matching "My hidden text"')
+    }
+});
+
+test('automage.get - cant select aria label within a [hidden]', async t => {
+    t.plan(1);
+
+    var window = await loadWindow();
+
+    try {
+        await automage.get(window.document.body, 'hidden text', 'text');
+    } catch (error) {
+        t.equal(error.message, 'text was not found matching "hidden text"')
+    }
+});
+
 test('automage.get - select a heading by regex match', async t => {
     t.plan(1);
 
