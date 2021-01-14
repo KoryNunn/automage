@@ -174,13 +174,13 @@ function matchDecendentLabels(element, description){
 }
 
 function matchLabelFor(element, description){
-    var name = element.getAttribute('name');
+    var id = element.getAttribute('id');
 
     if(
-        name &&
+        id &&
         findMatchingElements(
             description,
-            Array.from(getDocument(element).querySelectorAll(`label[for="${name}"]`))
+            Array.from(getDocument(element).querySelectorAll(`label[for="${id}"]`))
                 .filter(node => !node.closest('[hidden]')
                 )
         ).length
@@ -212,7 +212,7 @@ function findMatchingElements(description, elementsList) {
             };
         })
         .filter(result => result)
-        .sort((a, b) => a[0] - b[0])
+        .sort((a, b) => b[0] - a[0])
         .map(result => result[1]);
 }
 
@@ -263,7 +263,8 @@ function findAll(context, description, type, callback){
             })
             .sort(function(a, b){
                 return a.compareDocumentPosition(b) & 2 ? -1 : 1;
-            }).reduce((results, nextElement) => {
+            })
+            .reduce((results, nextElement) => {
                 if(results.some(element => nextElement.contains(element))) {
                     return results;
                 }

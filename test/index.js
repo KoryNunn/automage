@@ -104,6 +104,16 @@ test('automage.get - select the semantically correct element where multiple matc
     t.equal(field.tagName, 'INPUT', 'input field was returned');
 });
 
+test('automage.get - select the semantically correct field where the input has an associated label', async t => {
+    t.plan(1);
+
+    var window = await loadWindow();
+
+    var field = await automage.get(window.document.body, 'Another Field', 'field');
+
+    t.equal(field.tagName, 'INPUT', 'input field was returned');
+});
+
 test('automage.click - click a button', async t => {
     t.plan(1);
 
