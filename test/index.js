@@ -82,6 +82,16 @@ test('automage.get - select a heading by regex match', async t => {
     t.ok(pageHeading, 'Page heading was found');
 });
 
+test('automage.get - select a section by heading match', async t => {
+    t.plan(1);
+
+    var window = await loadWindow();
+
+    var coolContentSection = await automage.get(window.document.body, 'Cool content', 'section');
+
+    t.ok(coolContentSection, 'Page heading was found');
+});
+
 test('automage.get - if a single matching element isn\'t found, an error is thrown', async t => {
     t.plan(1);
 

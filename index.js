@@ -128,11 +128,11 @@ function matchTextContent(element, description){
     }
 }
 
-function matchBesideLabels(element, description){
+function matchBesideLabels(element, description, onlyScanDecendants){
     if(
         element.previousElementSibling &&
         element.previousElementSibling.matches(types.label.join()) &&
-        checkMatchValue(getElementVisibleText(element.previousElementSibling), description)
+        checkMatchValue(getElementVisibleText(element.previousElementSibling), description, onlyScanDecendants)
     ) {
         return 4;
     }
@@ -157,7 +157,7 @@ function matchDirectChildTextNodes(element, description){
     }
 }
 
-function matchDecendentLabels(element, description){
+function matchDecendentLabels(element, description, onlyScanDecendants){
     if(
         findMatchingElements(
             description,
@@ -166,7 +166,8 @@ function matchDecendentLabels(element, description){
                     !node.closest('[hidden]') &&
                     node.matches &&
                     node.matches(types.label.join())
-                )
+                ),
+            onlyScanDecendants
         ).length
     ){
         return 3
@@ -182,31 +183,35 @@ function matchLabelFor(element, description){
             description,
             Array.from(getDocument(element).querySelectorAll(`label[for="${id}"]`))
                 .filter(node => !node.closest('[hidden]')
-                )
+                ),
+            true
         ).length
     ){
         return 3
     }
 }
 
-function matchElementContent(element, description) {
+function matchElementContent(element, description, onlyScanDecendants) {
     return (
         // This check is fast, so we optimize by checking it first
         matchAttributes(element, description) ||
         (
             matchTextContent(element, description) ||
             matchDirectChildTextNodes(element, description) ||
-            matchLabelFor(element, description) ||
-            matchDecendentLabels(element, description) ||
-            matchBesideLabels(element, description)
+            matchDecendentLabels(element, description, onlyScanDecendants) ||
+            matchBesideLabels(element, description, onlyScanDecendants) ||
+
+            // the labelFor check can include already-scanned elements
+            // which can lead to an infinit recursive loop.
+            !onlyScanDecendants && matchLabelFor(element, description)
         )
     );
 }
 
-function findMatchingElements(description, elementsList) {
+function findMatchingElements(description, elementsList, onlyScanDecendants) {
     return Array.prototype.slice.call(elementsList)
         .map(function(element) {
-            var weighting = matchElementContent(element, description);
+            var weighting = matchElementContent(element, description, onlyScanDecendants);
             if(weighting){
                 return [weighting, element]
             };
