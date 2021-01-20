@@ -2,18 +2,18 @@
 ## automage - available methods
 
 ```
-automage.pressKey // press a key
-automage.pressKeys // press many keys
-automage.findAll // find all matching elements with a semantic selector sorted by type
-automage.find // find all matching element with a semantic selector and matching type
-automage.get // find exactly one matching element with a semantic selector and matching type
-automage.click // click exactly one matching element with a semantic selector
-automage.typeInto // type into exactly one matching element with a semantic selector
-automage.getFocusedElement // get the element that currently has focus in the document
-automage.focus // focus an element matching a semantic selector
-automage.changeValue // change value of exactly one matching element with a semantic selector, then blur the focused element
-automage.blur // blur the currently focused element
-automage.waitFor // wait for exactly one matching element with a semantic selector, and custom timeout
+automage.pressKey // (context, description, type, key[, callback]) press a key
+automage.pressKeys // (context, description, type, keys[, callback]) press many keys
+automage.findAll // (context, description, type[, timeout, callback]) find all matching elements with a semantic selector sorted by type
+automage.find // (context, description, type[, timeout, callback]) find all matching element with a semantic selector and matching type
+automage.get // (context, description, type[, timeout, callback]) find exactly one matching element with a semantic selector and matching type
+automage.click // (context, description, type[, timeout, callback]) click exactly one matching element with a semantic selector
+automage.typeInto // (context, description, type, keys[, timeout, callback]) type into exactly one matching element with a semantic selector
+automage.getFocusedElement // (context[, callback]) get the element that currently has focus in the document
+automage.focus // (context, description, type[, timeout, callback]) focus an element matching a semantic selector
+automage.changeValue // (context, description, type, value, [, timeout, callback]) change value of exactly one matching element with a semantic selector, then blur the focused element
+automage.blur // (context[, callback]) blur the currently focused element
+automage.waitFor // (context, description, type[, timeout, callback]) wait for exactly one matching element with a semantic selector, and custom timeout
 ```
 
 
@@ -28,6 +28,43 @@ pageHeading // Page heading was found
 ```
 
 
+## automage.get - select some text
+
+```
+var window = await loadWindow();
+
+var pageHeading = await automage.get(window.document.body, 'My test page', 'text');
+
+pageHeading // Page heading was found
+```
+
+
+## automage.get - cant select text within a [hidden]
+
+```
+var window = await loadWindow();
+
+try {
+    await automage.get(window.document.body, 'My hidden text', 'text');
+} catch (error) {
+    error.message === 'text was not found matching "My hidden text" - Retrying timed out after 100ms' 
+}
+```
+
+
+## automage.get - cant select aria label within a [hidden]
+
+```
+var window = await loadWindow();
+
+try {
+    await automage.get(window.document.body, 'hidden text', 'text');
+} catch (error) {
+    error.message === 'text was not found matching "hidden text" - Retrying timed out after 100ms' 
+}
+```
+
+
 ## automage.get - select a heading by regex match
 
 ```
@@ -39,6 +76,17 @@ pageHeading // Page heading was found
 ```
 
 
+## automage.get - select a section by heading match
+
+```
+var window = await loadWindow();
+
+var coolContentSection = await automage.get(window.document.body, 'Cool content', 'section');
+
+coolContentSection // Page heading was found
+```
+
+
 ## automage.get - if a single matching element isn\'t found, an error is thrown
 
 ```
@@ -47,7 +95,7 @@ var window = await loadWindow();
 try {
     await automage.get(window.document.body, 'I don\'t exist', 'heading');
 } catch (error) {
-    error.message === 'heading was not found matching "I don\'t exist"'
+    error.message === 'heading was not found matching "I don\'t exist" - Retrying timed out after 100ms' 
 }
 ```
 
@@ -58,6 +106,17 @@ try {
 var window = await loadWindow();
 
 var field = await automage.get(window.document.body, 'Some Field', 'field');
+
+field.tagName === 'INPUT' // input field was returned
+```
+
+
+## automage.get - select the semantically correct field where the input has an associated label
+
+```
+var window = await loadWindow();
+
+var field = await automage.get(window.document.body, 'Another Field', 'field');
 
 field.tagName === 'INPUT' // input field was returned
 ```
@@ -84,7 +143,7 @@ var window = await loadWindow();
 try {
     await automage.click(window.document.body, 'I don\'t exist', 'button');
 } catch (error) {
-    error.message === 'Could not find clickable button matching "I don\'t exist"'
+    error.message === 'Could not find clickable button matching "I don\'t exist" - Retrying timed out after 100ms' 
 }
 ```
 
@@ -108,7 +167,7 @@ var window = await loadWindow();
 try {
     await automage.typeInto(window.document.body, 'I don\'t exist', 'field', 'some text');
 } catch (error) {
-    error.message === 'field was not found matching "I don\'t exist"'
+    error.message === 'field was not found matching "I don\'t exist" - Retrying timed out after 100ms' 
 }
 ```
 
@@ -133,7 +192,7 @@ var window = await loadWindow();
 try {
     await automage.waitFor(window.document.body, 'New Async UI', 'heading', 100);
 } catch (error) {
-    error.message === 'Timed out attempting to find heading matching "New Async UI"'
+    error.message === 'heading was not found matching "New Async UI" - Retrying timed out after 100ms' 
 }
 ```
 

@@ -14,18 +14,18 @@ async function loadWindow () {
 test('automage - available methods', async t => {
     t.plan(12);
 
-    t.ok(automage.pressKey, 'press a key');
-    t.ok(automage.pressKeys, 'press many keys');
-    t.ok(automage.findAll, 'find all matching elements with a semantic selector sorted by type');
-    t.ok(automage.find, 'find all matching element with a semantic selector and matching type');
-    t.ok(automage.get, 'find exactly one matching element with a semantic selector and matching type');
-    t.ok(automage.click, 'click exactly one matching element with a semantic selector');
-    t.ok(automage.typeInto, 'type into exactly one matching element with a semantic selector');
-    t.ok(automage.getFocusedElement, 'get the element that currently has focus in the document');
-    t.ok(automage.focus, 'focus an element matching a semantic selector');
-    t.ok(automage.changeValue, 'change value of exactly one matching element with a semantic selector, then blur the focused element');
-    t.ok(automage.blur, 'blur the currently focused element');
-    t.ok(automage.waitFor, 'wait for exactly one matching element with a semantic selector, and custom timeout');
+    t.ok(automage.pressKey, '(context, description, type, key[, callback]) press a key');
+    t.ok(automage.pressKeys, '(context, description, type, keys[, callback]) press many keys');
+    t.ok(automage.findAll, '(context, description, type[, timeout, callback]) find all matching elements with a semantic selector sorted by type');
+    t.ok(automage.find, '(context, description, type[, timeout, callback]) find all matching element with a semantic selector and matching type');
+    t.ok(automage.get, '(context, description, type[, timeout, callback]) find exactly one matching element with a semantic selector and matching type');
+    t.ok(automage.click, '(context, description, type[, timeout, callback]) click exactly one matching element with a semantic selector');
+    t.ok(automage.typeInto, '(context, description, type, keys[, timeout, callback]) type into exactly one matching element with a semantic selector');
+    t.ok(automage.getFocusedElement, '(context[, callback]) get the element that currently has focus in the document');
+    t.ok(automage.focus, '(context, description, type[, timeout, callback]) focus an element matching a semantic selector');
+    t.ok(automage.changeValue, '(context, description, type, value, [, timeout, callback]) change value of exactly one matching element with a semantic selector, then blur the focused element');
+    t.ok(automage.blur, '(context[, callback]) blur the currently focused element');
+    t.ok(automage.waitFor, '(context, description, type[, timeout, callback]) wait for exactly one matching element with a semantic selector, and custom timeout');
 });
 
 test('automage.get - select a heading', async t => {
@@ -56,7 +56,7 @@ test('automage.get - cant select text within a [hidden]', async t => {
     try {
         await automage.get(window.document.body, 'My hidden text', 'text');
     } catch (error) {
-        t.equal(error.message, 'text was not found matching "My hidden text"')
+        t.equal(error.message, 'text was not found matching "My hidden text" - Retrying timed out after 100ms')
     }
 });
 
@@ -68,7 +68,7 @@ test('automage.get - cant select aria label within a [hidden]', async t => {
     try {
         await automage.get(window.document.body, 'hidden text', 'text');
     } catch (error) {
-        t.equal(error.message, 'text was not found matching "hidden text"')
+        t.equal(error.message, 'text was not found matching "hidden text" - Retrying timed out after 100ms')
     }
 });
 
@@ -100,7 +100,7 @@ test('automage.get - if a single matching element isn\'t found, an error is thro
     try {
         await automage.get(window.document.body, 'I don\'t exist', 'heading');
     } catch (error) {
-        t.equal(error.message, 'heading was not found matching "I don\'t exist"');
+        t.equal(error.message, 'heading was not found matching "I don\'t exist" - Retrying timed out after 100ms');
     }
 });
 
@@ -144,7 +144,7 @@ test('automage.click - if a single matching element isn\'t found, an error is th
     try {
         await automage.click(window.document.body, 'I don\'t exist', 'button');
     } catch (error) {
-        t.equal(error.message, 'Could not find clickable button matching "I don\'t exist"');
+        t.equal(error.message, 'Could not find clickable button matching "I don\'t exist" - Retrying timed out after 100ms');
     }
 });
 
@@ -166,7 +166,7 @@ test('automage.typeInto - if a single matching element isn\'t found, an error is
     try {
         await automage.typeInto(window.document.body, 'I don\'t exist', 'field', 'some text');
     } catch (error) {
-        t.equal(error.message, 'field was not found matching "I don\'t exist"');
+        t.equal(error.message, 'field was not found matching "I don\'t exist" - Retrying timed out after 100ms');
     }
 });
 
@@ -189,7 +189,7 @@ test('automage.waitFor - if a matching element isn\'t found within the timeout, 
     try {
         await automage.waitFor(window.document.body, 'New Async UI', 'heading', 100);
     } catch (error) {
-        t.equal(error.message, 'Timed out attempting to find heading matching "New Async UI"');
+        t.equal(error.message, 'heading was not found matching "New Async UI" - Retrying timed out after 100ms');
     }
 });
 

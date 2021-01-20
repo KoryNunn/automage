@@ -12,6 +12,20 @@ var automage = require('automage');
 
 Methods generally accept the arguments (target <Dom node>, description <string|RegExp>, type <string [ElementType](./elementTypes.js)>, callback)
 
+All selection methods accept an optional timeout, eg:
+
+```javascript
+automage.get(context, description, type, ..., timeout);
+```
+
+All methods either return a promise, or accept an optional callback, eg:
+
+```javascript
+await automage.get(context, description, type, ...);
+// Or
+automage.get(context, description, type, ..., callback);
+```
+
 ## select a heading
 
 ```javascript
