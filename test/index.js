@@ -296,3 +296,20 @@ test('automage.changeValue - set the value of an element', async t => {
 
     t.equal(input.value, 'abc');
 });
+
+test('automage.changeValue - clear the value of an element', async t => {
+    t.plan(6);
+
+    var window = await loadWindow();
+
+    var input = await automage.changeValue(window.document.body, 'Input with placeholder', 'field', 'abc');
+    t.equal(input.value, 'abc');
+
+    input.addEventListener('keydown', () => t.pass('recieved keydown event'));
+    input.addEventListener('keyup', () => t.pass('recieved keyup event'));
+    input.addEventListener('keypress', () => t.pass('recieved keypress event'));
+    input.addEventListener('input', () => t.pass('recieved input event'));
+
+    await automage.changeValue(window.document.body, 'Input with placeholder', 'field', '');
+    t.equal(input.value, '');
+});

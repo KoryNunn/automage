@@ -22,9 +22,9 @@ function getFocusedElement(context, callback) {
 }
 
 function pressKey(context, key, fullValue, callback) {
-    key = key.slice(0, 1);
     var defaultView = getDocument(context).defaultView;
     var element = getDocument(context).activeElement;
+    var isBackspace = key === 'U+0008';
 
     if(arguments.length < 3){
         callback = fullValue;
@@ -43,6 +43,18 @@ function pressKey(context, key, fullValue, callback) {
     inputEvent[method]('input', true, true, defaultView, key, 3, true, false, true, false, false);
     keyupEvent[method]('keyup', true, true, defaultView, key, 3, true, false, true, false, false);
 
+    // Clear event due to backspace or delete
+    if(isBackspace){
+        [
+            keypressEvent,
+            inputEvent,
+            keyupEvent
+        ].forEach(event => {
+            event.keyCode = 8;
+            event.which = 8;
+        })
+    }
+
     element.dispatchEvent(keydownEvent);
     if ('value' in element) {
         element.value = fullValue;
@@ -55,11 +67,18 @@ function pressKey(context, key, fullValue, callback) {
 }
 
 function pressKeys(context, keys, callback) {
+    var isEmptyStringKey = keys === '';
+
     function pressNextKey(keyIndex, callback){
         var nextKey = String(keys).charAt(keyIndex);
 
-        if(nextKey === ''){
+        if(!isEmptyStringKey && nextKey === ''){
             return callback(null, getDocument(context).activeElement);
+        }
+
+        if(isEmptyStringKey){
+            isEmptyStringKey = false;
+            nextKey = 'U+0008';
         }
 
         pressKey(context, nextKey, keys.slice(0, keyIndex + 1), function() {
@@ -512,6 +531,11 @@ function changeValue(context, description, type, value, callback) {
             element.hasAttribute('contenteditable')
         ){
             return righto(changeNonTextInput, element, value);
+        }
+
+        if(value === ''){
+            // Select the contents before deleting.
+            element.select();
         }
 
         var keysPressed = righto(pressKeys, context, value);
