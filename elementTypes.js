@@ -1,24 +1,50 @@
+var list = ['ul', 'ol', '[role=list]'];
+var item = ['li', '[role=listitem]'];
+var button = ['button', 'a', 'input[type=button]', '[role=button]', '[tabindex]'];
+var link = ['a', 'button', 'input[type=button]', '[role=button]'];
+var notLabel = [
+    `:not(a):not(button):not([type=button]):not([role=button])`,
+    `${list.map(type => `:not(${type})`).join('')}`,
+    `${item.map(type => `:not(${type})`).join('')}`,
+    `${button.map(type => `:not(${type})`).join('')}`,
+    `${link.map(type => `:not(${type})`).join('')}`
+].join('');
+var label = [
+    `label${notLabel}`,
+    `span${notLabel}`,
+    `td${notLabel}`,
+    `${notLabel}`
+];
+var heading = ['[role=heading]', 'h1', 'h2', 'h3', 'h4'];
+var image = ['img', 'svg', '[role=img]'];
+var field = ['input', 'textarea', 'select', 'label', '[role=textbox]', '[contenteditable]'];
+var section = ['section'];
+var row = ['tr', '[role=row]'];
+var cell = ['td', 'th', '[role=cell]'];
+var article = ['[role=article]', 'article'];
+var region = ['[role=region]'];
+var dialog = ['[role=dialog]'];
+var navigation = ['[role=navigation]'];
+var all = ['*'];
+var text = ['p', 'section', 'article', 'aside', 'header', 'footer', 'span', 'div', '*'];
+
+// Each of the below is a valid UI 'Type' that can be used with automage.
 module.exports = {
-    'button': ['button', 'a', 'input[type=button]', '[role=button]', '[tabindex]'],
-    'link': ['a', 'button', 'input[type=button]', '[role=button]'],
-    'label': [
-        'label:not(a):not(button):not([type=button]):not([role=button])',
-        'span:not(a):not(button):not([type=button]):not([role=button])',
-        'td:not(a):not(button):not([type=button]):not([role=button])',
-        ':not(a):not(button):not([type=button]):not([role=button])'
-    ],
-    'heading': ['[role=heading]', 'h1', 'h2', 'h3', 'h4'],
-    'image': ['img', 'svg', '[role=img]'],
-    'field': ['input', 'textarea', 'select', 'label', '[role=textbox]', '[contenteditable]'],
-    'section': ['section'],
-    'row': ['tr', '[role=row]'],
-    'cell': ['td', 'th', '[role=cell]'],
-    'item': ['li', '[role=listitem]'],
-    'article': ['[role=article]'],
-    'region': ['[role=region]'],
-    'dialog': ['[role=dialog]'],
-    'list': ['ul', 'ol', '[role=list]'],
-    'navigation': ['[role=navigation]'],
-    'all': ['*'],
-    'text': ['p', 'section', 'article', 'aside', 'header', 'footer', 'span', 'div', '*']
+    button, // Things you want to click.
+    link, // Things that are links to other places.
+    label, // Things that labels other bits of UI.
+    heading, // Headings for chunks of UI
+    image, // Graphical UI
+    field, // Interactive UI, eg: inputs, selects, radiobuttons etc.
+    section, // Sections of UI.
+    row, // Rows in a table.
+    cell, // Cells in a table.
+    item, // An item in a list.
+    article, // DOM Article elements.
+    region, // UI with a role of 'region'.
+    dialog, // UI with a role of 'dialog'.
+    list, // Lists of items
+    navigation, // UI with a role of 'navigation'.
+    all, // Any element. This is a very vague selector and usually wont do what you want..
+    text // Things that usually hold text. This is a very vague selector and sometimes wont do what you want..
 };

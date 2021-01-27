@@ -18,6 +18,12 @@ All selection methods accept an optional timeout, eg:
 automage.get(context, description, type, ..., timeout);
 ```
 
+The default timeout is 100ms (`automage.defaultWaitTimeout`), you can override this globally by setting it to your custom timeout, eg:
+
+```javascript
+automage.defaultWaitTimeout = 200;
+```
+
 All methods either return a promise, or accept an optional callback, eg:
 
 ```javascript

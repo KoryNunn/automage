@@ -24,41 +24,39 @@ function getFocusedElement(context, callback) {
 function pressKey(context, key, fullValue, callback) {
     var defaultView = getDocument(context).defaultView;
     var element = getDocument(context).activeElement;
-    var isBackspace = key === 'U+0008';
+    var specialKeyMatch = key.match(/^U\+(\d\d\d\d)$/);
+    var keyCode = specialKeyMatch ? parseInt(specialKeyMatch[1]) : key.charCodeAt(0);
+
+    if(specialKeyMatch){
+        key = '';
+    }
 
     if(arguments.length < 3){
         callback = fullValue;
         fullValue = (element.value || '') + key;
     }
 
-    var keydownEvent = new defaultView.KeyboardEvent('keydown'),
-        keyupEvent = new defaultView.KeyboardEvent('keyup'),
-        keypressEvent = new defaultView.KeyboardEvent('keypress');
-        inputEvent = new defaultView.KeyboardEvent('input');
-
-    var method = 'initKeyboardEvent' in keydownEvent ? 'initKeyboardEvent' : 'initKeyEvent';
-
-    keydownEvent[method]('keydown', true, true, defaultView, key, 3, true, false, true, false, false);
-    keypressEvent[method]('keypress', true, true, defaultView, key, 3, true, false, true, false, false);
-    inputEvent[method]('input', true, true, defaultView, key, 3, true, false, true, false, false);
-    keyupEvent[method]('keyup', true, true, defaultView, key, 3, true, false, true, false, false);
-
-    // Clear event due to backspace or delete
-    if(isBackspace){
-        [
-            keypressEvent,
-            inputEvent,
-            keyupEvent
-        ].forEach(event => {
-            event.keyCode = 8;
-            event.which = 8;
-        })
+    function makeEvent(type) {
+        return new defaultView.KeyboardEvent(type, {
+            code: keyCode,
+            key: key,
+            charCode: keyCode,
+            keyCode: keyCode,
+            view: defaultView
+        });
     }
 
+    var keydownEvent = makeEvent('keydown'),
+        keyupEvent = makeEvent('keyup'),
+        keypressEvent = makeEvent('keypress'),
+        inputEvent = makeEvent('input');
+
     element.dispatchEvent(keydownEvent);
+
     if ('value' in element) {
         element.value = fullValue;
     }
+
     element.dispatchEvent(keypressEvent);
     element.dispatchEvent(inputEvent);
     element.dispatchEvent(keyupEvent);
@@ -578,7 +576,7 @@ function waitFor(fn){
             timeoutIndex = null;
         }
 
-        var timeout = timeoutIndex != null ? args.splice(timeoutIndex, 1).pop() : 100;
+        var timeout = timeoutIndex != null ? args.splice(timeoutIndex, 1).pop() : automage.defaultWaitTimeout;
         var startTime = Date.now();
         var callback;
 
@@ -608,6 +606,7 @@ function waitFor(fn){
 }
 
 const automage = {
+    defaultWaitTimeout: 100,
     pressKey: pressKey,
     pressKeys: pressKeys,
     findAll: waitFor(findAll),
