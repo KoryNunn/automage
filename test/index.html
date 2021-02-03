@@ -8,8 +8,14 @@
 
         function makeUi(text){
             var newUi = document.createElement('h1');
+            newUi.className = 'newUi';
             newUi.textContent = text || 'New UI';
             document.body.appendChild(newUi);
+        }
+
+        function removeUi(){
+            Array.from(document.querySelectorAll('.newUi'))
+                .forEach(ui => ui.remove());
         }
 
         function makeUiAsync(){
@@ -64,6 +70,7 @@
     </div>
     <button onclick=makeUi()>I make UI</button>,
     <button onclick=makeUiAsync()>I make UI eventually</button>,
+    <button onclick=removeUi()>I remove UI</button>,
     <h1><span>Decendent Text</span> Direct Text</h1>
     <div alt="cool image">
     <img height="20px" src="https://upload.wikimedia.org/wikipedia/commons/6/6a/JavaScript-logo.png" alt="cool image">

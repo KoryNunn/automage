@@ -370,6 +370,20 @@ function get(context, description, type, callback) {
     return callback ? result(callback) : result;
 }
 
+function isMissing(context, description, type, callback) {
+    if (automage.debug) {
+        console.log('isMissing', description, type);
+    }
+
+    var result = righto.handle(righto(get, context, description, type), (error, done) => done())
+        .get(result => result
+            ? righto.fail(new Error(`A ${type} was found matching "${description}"`))
+            : true
+        );
+
+    return callback ? result(callback) : result;
+}
+
 function setValue(context, description, type, value, callback) {
     if (automage.debug) {
         console.log('setValue', description, type);
@@ -612,6 +626,7 @@ const automage = {
     findAll: waitFor(findAll),
     find: waitFor(find),
     get: waitFor(get),
+    isMissing: waitFor(isMissing),
     click: waitFor(click),
     typeInto: waitFor(typeInto),
     getFocusedElement: getFocusedElement,

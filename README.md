@@ -37,11 +37,13 @@ automage.get(context, description, type, ..., callback);
 ```javascript
 var pageHeading = await automage.get(document.body, 'My test page', 'heading');
 ```
+
 ## click a button
 
 ```javascript
 await automage.click(document.body, 'I make UI', 'button');
 ```
+
 ## enter text
 
 ```javascript
@@ -49,12 +51,21 @@ var input = await automage.typeInto(document.body, 'Input with placeholder', 'fi
 
 input.value === 'some text'
 ```
+
 ## wait for element
 
 ```javascript
 await automage.click(document.body, 'I make UI eventually', 'button');
 var newHeading = await automage.waitFor(document.body, 'New Async UI', 'heading', 1000);
 ```
+
+## Check that some UI has been removed
+
+```javascript
+await automage.click(document.body, 'I remove UI', 'button');
+await automage.isMissing(document.body, 'New UI', 'heading');
+```
+
 
 ## Full documentation
 

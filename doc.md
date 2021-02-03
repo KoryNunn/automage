@@ -14,6 +14,7 @@ automage.focus // (context, description, type[, timeout, callback]) focus an ele
 automage.changeValue // (context, description, type, value, [, timeout, callback]) change value of exactly one matching element with a semantic selector, then blur the focused element
 automage.blur // (context[, callback]) blur the currently focused element
 automage.waitFor // (context, description, type[, timeout, callback]) wait for exactly one matching element with a semantic selector, and custom timeout
+automage.isMissing // (context, description, type[, timeout, callback]) ensure there are no matching elements with a semantic selector and matching type
 ```
 
 
@@ -305,4 +306,41 @@ input.addEventListener('input', () => // recieved input event);
 var input = await automage.changeValue(window.document.body, 'Input with placeholder', 'field', 'abc');
 
 input.value === 'abc'
+```
+
+
+## automage.changeValue - clear the value of an element
+
+```
+var window = await loadWindow();
+
+var input = await automage.changeValue(window.document.body, 'Input with placeholder', 'field', 'abc');
+input.value === 'abc' 
+
+input.addEventListener('keydown', () => // recieved keydown event);
+input.addEventListener('keyup', () => // recieved keyup event);
+input.addEventListener('keypress', () => // recieved keypress event);
+input.addEventListener('input', () => // recieved input event);
+
+await automage.changeValue(window.document.body, 'Input with placeholder', 'field', '');
+input.value === ''
+```
+
+
+## automage.isMissing - ensure something isnt found by the end of the wait time
+
+```
+var window = await loadWindow();
+
+await automage.click(window.document.body, 'I make UI', 'button');
+
+var newHeading = await automage.get(window.document.body, 'New Ui', 'heading');
+
+newHeading // New heading was created upon button click
+
+await automage.click(window.document.body, 'I remove UI', 'button');
+
+var headingIsMissing = await automage.isMissing(window.document.body, 'New Ui', 'heading');
+
+headingIsMissing // Heading was removed
 ```

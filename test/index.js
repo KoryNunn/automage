@@ -12,7 +12,7 @@ async function loadWindow () {
 }
 
 test('automage - available methods', async t => {
-    t.plan(12);
+    t.plan(13);
 
     t.ok(automage.pressKey, '(context, description, type, key[, callback]) press a key');
     t.ok(automage.pressKeys, '(context, description, type, keys[, callback]) press many keys');
@@ -26,6 +26,7 @@ test('automage - available methods', async t => {
     t.ok(automage.changeValue, '(context, description, type, value, [, timeout, callback]) change value of exactly one matching element with a semantic selector, then blur the focused element');
     t.ok(automage.blur, '(context[, callback]) blur the currently focused element');
     t.ok(automage.waitFor, '(context, description, type[, timeout, callback]) wait for exactly one matching element with a semantic selector, and custom timeout');
+    t.ok(automage.isMissing, '(context, description, type[, timeout, callback]) ensure there are no matching elements with a semantic selector and matching type');
 });
 
 test('automage.get - select a heading', async t => {
@@ -312,4 +313,22 @@ test('automage.changeValue - clear the value of an element', async t => {
 
     await automage.changeValue(window.document.body, 'Input with placeholder', 'field', '');
     t.equal(input.value, '');
+});
+
+test('automage.isMissing - ensure something isnt found by the end of the wait time', async t => {
+    t.plan(2);
+
+    var window = await loadWindow();
+
+    await automage.click(window.document.body, 'I make UI', 'button');
+
+    var newHeading = await automage.get(window.document.body, 'New Ui', 'heading');
+
+    t.ok(newHeading, 'New heading was created upon button click');
+
+    await automage.click(window.document.body, 'I remove UI', 'button');
+
+    var headingIsMissing = await automage.isMissing(window.document.body, 'New Ui', 'heading');
+
+    t.ok(headingIsMissing, 'Heading was removed');
 });
