@@ -16,14 +16,18 @@ var label = [
     `${notLabel}`
 ];
 var heading = ['[role=heading]', 'h1', 'h2', 'h3', 'h4'];
+var header = ['header', '[role=banner]'];
+var footer = ['footer'];
 var image = ['img', 'svg', '[role=img]'];
 var field = ['input', 'textarea', 'select', 'label', '[role=textbox]', '[contenteditable]'];
 var section = ['section'];
+var form = ['form', '[role=form]'];
 var row = ['tr', '[role=row]'];
 var cell = ['td', 'th', '[role=cell]'];
 var article = ['[role=article]', 'article'];
 var region = ['[role=region]'];
 var dialog = ['[role=dialog]'];
+var area = [section, form, article, region, dialog].flat();
 var navigation = ['[role=navigation]'];
 var all = ['*'];
 var text = ['p', 'section', 'article', 'aside', 'header', 'footer', 'span', 'div', '*'];
@@ -33,18 +37,22 @@ module.exports = {
     button, // Things you want to click.
     link, // Things that are links to other places.
     label, // Things that labels other bits of UI.
-    heading, // Headings for chunks of UI
+    heading, // Headings for chunks of UI.
+    header, // Content area headers.
+    footer, // Content area footers.
     image, // Graphical UI
     field, // Interactive UI, eg: inputs, selects, radiobuttons etc.
     section, // Sections of UI.
+    form, // Forms.
     row, // Rows in a table.
     cell, // Cells in a table.
     item, // An item in a list.
     article, // DOM Article elements.
     region, // UI with a role of 'region'.
     dialog, // UI with a role of 'dialog'.
-    list, // Lists of items
+    area, // Logical UI area, eg form, section, etc..'.
+    list, // Lists of items.
     navigation, // UI with a role of 'navigation'.
-    all, // Any element. This is a very vague selector and usually wont do what you want..
-    text // Things that usually hold text. This is a very vague selector and sometimes wont do what you want..
+    all, // Any element. This is a very vague selector and usually wont do what you want.
+    text // Things that usually hold text. This is a very vague selector and sometimes wont do what you want.
 };

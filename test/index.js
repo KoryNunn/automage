@@ -90,7 +90,17 @@ test('automage.get - select a section by heading match', async t => {
 
     var coolContentSection = await automage.get(window.document.body, 'Cool content', 'section');
 
-    t.ok(coolContentSection, 'Page heading was found');
+    t.ok(coolContentSection, 'Section was found');
+});
+
+test('automage.get - select a form by heading match', async t => {
+    t.plan(1);
+
+    var window = await loadWindow();
+
+    var coolForm = await automage.get(window.document.body, 'My cool form', 'form');
+
+    t.ok(coolForm, 'Form was found');
 });
 
 test('automage.get - if a single matching element isn\'t found, an error is thrown', async t => {
