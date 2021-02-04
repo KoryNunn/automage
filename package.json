@@ -1,6 +1,6 @@
 {
   "name": "automage",
-  "version": "2.2.0",
+  "version": "2.2.1",
   "description": "Interact with DOM like a human.",
   "main": "index.js",
   "scripts": {
