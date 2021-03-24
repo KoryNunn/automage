@@ -44,12 +44,24 @@ var pageHeading = await automage.get(document.body, 'My test page', 'heading');
 await automage.click(document.body, 'I make UI', 'button');
 ```
 
+By default, automage will wait for effects for 10ms (`automage.defaultClickWaitTimeout`), you can override this globally by setting it to your custom timeout, eg:
+
+```javascript
+automage.defaultClickWaitTimeout = 50;
+```
+
 ## enter text
 
 ```javascript
 var input = await automage.typeInto(document.body, 'Input with placeholder', 'field', 'some text');
 
 input.value === 'some text'
+```
+
+By default, automage will wait for effects between "keystrokes" for 10ms (`automage.defaultKeyPressWaitTimeout`), you can override this globally by setting it to your custom timeout, eg:
+
+```javascript
+automage.defaultKeyPressWaitTimeout = 50;
 ```
 
 ## wait for element

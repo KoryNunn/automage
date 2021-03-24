@@ -82,7 +82,7 @@ function pressKeys(context, keys, callback) {
         pressKey(context, nextKey, keys.slice(0, keyIndex + 1), function() {
             setTimeout(function(){
                 pressNextKey(keyIndex + 1, callback);
-            }, 10);
+            }, automage.defaultKeyPressWaitTimeout);
         });
     }
 
@@ -438,7 +438,7 @@ function click(context, description, type, callback) {
 
         return element;
     });
-    var waitForEffect = righto(wait, 10);
+    var waitForEffect = righto(wait, automage.defaultClickWaitTimeout);
     var result = righto.mate(clickedElement, righto.after(waitForEffect));
 
     return callback ? result(callback) : result;
@@ -621,6 +621,8 @@ function waitFor(fn){
 
 const automage = {
     defaultWaitTimeout: 100,
+    defaultClickWaitTimeout: 10,
+    defaultKeyPressWaitTimeout: 10,
     pressKey: pressKey,
     pressKeys: pressKeys,
     findAll: waitFor(findAll),

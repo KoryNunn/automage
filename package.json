@@ -4,7 +4,8 @@
   "description": "Interact with DOM like a human.",
   "main": "index.js",
   "scripts": {
-    "test": "node test"
+    "test": "node test",
+    "bundle": "browserify index.js --standalone automage > automage.js"
   },
   "license": "MIT",
   "dependencies": {
