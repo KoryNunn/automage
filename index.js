@@ -12,6 +12,13 @@ var noElementOfType = 'no elements of type ';
 
 var nonTextInputs = ['date', 'range', 'select'];
 
+function debug(...args){
+    if(automage.debug){
+        /* c8 ignore next 2 */
+        console.log(args);
+    }
+}
+
 function getDocument(context){
     return context.ownerDocument || (context.defaultView ? context : null);
 }
@@ -127,9 +134,7 @@ function typeInto(context, state, description, type, value, callback) {
         state = null;
     }
     
-    if (automage.debug) {
-        console.log('typeInto', state, description, type);
-    }
+    debug('typeInto', state, description, type);
     var focused = righto(focus, context, state, description, type);
     var keysPressed = righto(pressKeys, context, value, righto.after(focused));
 
@@ -197,17 +202,13 @@ function isTextNode(node){
 }
 
 function matchDirectChildTextNodes(element, description){
-    if(element.closest('[hidden]')){
-        return;
-    }
-
     var directChildText = Array.from(element.childNodes)
         .filter(isTextNode)
         .map(textNode => textNode.textContent)
         .join('');
 
     if(checkMatchValue(directChildText, description)){
-        return  2;
+        return 2;
     }
 }
 
@@ -274,11 +275,8 @@ function findMatchingElements(description, elementsList, onlyScanDecendants) {
         .sort((a, b) => a[0] - b[0]);
 }
 
-function getElementTextWeight(element) {
-    var index = textWeighting.findIndex(selector => element.matches(selector));
-    return textWeighting.length - (index < 0 ? Infinity : index);
-}
-
+// ToDo: add coverage.
+/* c8 ignore next 4 */
 function getElementClickWeight(element) {
     var index = clickWeighting.findIndex(selector => element.matches(selector));
     return clickWeighting.length - (index < 0 ? Infinity : index);
@@ -290,11 +288,6 @@ function getElementValueWeight(element) {
 }
 
 function findAllMatchingElements(context, state, description, type) {
-    if(!(typeof type === 'string')) {
-        type = state;
-        state = null;
-    }
-
     var typeSelectors = getTypeSelectors(type);
     var stateCheck = getStateCheck(state);
     var elements = Array.from(context.querySelectorAll(typeSelectors))
@@ -334,13 +327,13 @@ function findAllMatchingElements(context, state, description, type) {
 
 function findAll(context, state, description, type, callback){
     if(!(typeof type === 'string')) {
-        type = state;
+        callback = type;
+        type = description;
+        description = state;
         state = null;
     }
 
-    if (automage.debug) {
-        console.log('findAll', state, description, type);
-    }
+    debug('findAll', state, description, type);
 
     var typeSelectors = getTypeSelectors(type);
 
@@ -348,7 +341,7 @@ function findAll(context, state, description, type, callback){
         var matched = findAllMatchingElements(context, state, description, type);
 
         return matched;
-    })
+    });
 
     return callback ? results(callback) : results;
 }
@@ -361,9 +354,7 @@ function find(context, state, description, type, callback) {
         state = null;
     }
 
-    if (automage.debug) {
-        console.log('find', state, description, type);
-    }
+    debug('find', state, description, type);
 
     var typeSelectors = getTypeSelectors(type);
 
@@ -398,9 +389,7 @@ function get(context, state, description, type, callback) {
         state = null;
     }
 
-    if (automage.debug) {
-        console.log('get', state, description, type);
-    }
+    debug('get', state, description, type);
 
     var typeSelectors = getTypeSelectors(type);
     var elements = righto(find, context, state, description, type);
@@ -430,9 +419,7 @@ function isMissing(context, state, description, type, callback) {
         state = null;
     }
 
-    if (automage.debug) {
-        console.log('isMissing', state, description, type);
-    }
+    debug('isMissing', state, description, type);
 
     var result = righto.handle(righto(get, context, state, description, type), (error, done) => done())
         .get(result => result
@@ -441,26 +428,6 @@ function isMissing(context, state, description, type, callback) {
         );
 
     return callback ? result(callback) : result;
-}
-
-function setValue(context, state, description, type, value, callback) {
-    if(!(typeof type === 'string')) {
-        callback = type;
-        type = description;
-        description = state;
-        state = null;
-    }
-    
-    if (automage.debug) {
-        console.log('setValue', state, description, type);
-    }
-    var focused = righto(focus, context, state, description, type);
-    var valueSet = focused.get(target => {
-        target.value = value;
-        return target;
-    })
-
-    return callback ? valueSet(callback) : valueSet;
 }
 
 function wait(time, callback) {
@@ -475,14 +442,10 @@ function click(context, state, description, type, callback) {
         state = null;
     }
 
-    if (automage.debug) {
-        console.log('click', state, description, type);
-    }
+    debug('click', state, description, type);
     var clickTargets = righto(findAll, context, state, description, type);
     var clickedElement = clickTargets.get(elements => {
-        var sorted = elements.sort(function(a, b) {
-            return getElementClickWeight(b) - getElementClickWeight(a);
-        })
+        var sorted = elements.sort((a, b) => getElementClickWeight(b) - getElementClickWeight(a));
 
         var element = sorted[0];
 
@@ -491,6 +454,8 @@ function click(context, state, description, type, callback) {
         }
 
         // SVG paths
+        // ToDo: add coverage.
+        /* c8 ignore next 3 */
         while(!element.click){
             element = element.parentNode;
         }
@@ -525,9 +490,7 @@ function focus(context, state, description, type, callback) {
         state = null;
     }
     
-    if (automage.debug) {
-        console.log('focus', state, description, type);
-    }
+    debug('focus', state, description, type);
     var elements = righto(findAll, context, state, description, type)
 
     var focuesdElement = elements.get(elements => {
@@ -584,6 +547,11 @@ function encodeDateValue(date){
     return value;
 }
 
+function changeContenteditableValue(element, value, callback) {
+    element.textContent = value;
+    callback(null, element);
+}
+
 function encodeSelectValue(label, element){
     var selectedOption = Array.from(element.querySelectorAll('option'))
         .find(option => matchElementContent(option, label));
@@ -598,17 +566,14 @@ var typeEncoders = {
 
 function changeNonTextInput(element, value, callback){
     if(element.hasAttribute('contenteditable')){
-        return changeContenteditableValue(element, value, callback)
+        return changeContenteditableValue(element, value, callback);
     }
-
-    var value = null;
 
     if(element.type in typeEncoders){
         value = typeEncoders[element.type](value, element);
-    } else {
-        value = value;
     }
-    return changeInputValue(element, value, callback);
+
+    changeInputValue(element, value, callback);
 }
 
 function changeValue(context, state, description, type, value, callback) {
@@ -620,9 +585,7 @@ function changeValue(context, state, description, type, value, callback) {
         state = null;
     }
 
-    if (automage.debug) {
-        console.log('changeValue', state, description, type);
-    }
+    debug('changeValue', state, description, type);
     var focusedElement = righto(focus, context, state, description, type);
     var valueChangedElement = focusedElement.get(element => {
         if(
