@@ -39,6 +39,19 @@ test('automage.get - select a heading', async t => {
     t.ok(pageHeading, 'Page heading was found');
 });
 
+test('automage.get - use a callback', async t => {
+    t.plan(1);
+
+    var window = await loadWindow();
+
+    await new Promise(resolve => {
+        automage.get(window.document.body, 'My test page', 'heading', function(error, pageHeading){
+            t.ok(pageHeading, 'Page heading was found');
+            resolve();
+        });
+    });
+});
+
 test('automage.get - select some text', async t => {
     t.plan(1);
 
@@ -135,6 +148,76 @@ test('automage.get - select the semantically correct field where the input has a
     t.equal(field.tagName, 'INPUT', 'input field was returned');
 });
 
+test('automage.get - select an element by text nodes', async t => {
+    t.plan(1);
+
+    var window = await loadWindow();
+
+    var heading = await automage.get(window.document.body, 'Something', 'heading');
+
+    t.ok(heading, 'heading was found');
+});
+
+test('automage.get - if more than one element is found, an error is thrown', async t => {
+    t.plan(1);
+
+    var window = await loadWindow();
+
+    try {
+        await automage.get(window.document.body, 'Button with state', 'button');
+    } catch (error) {
+        t.equal(error.message, 'More than one button was found matching "Button with state" - Retrying timed out after 100ms'); 
+    } 
+});
+
+test('automage.get - Invalid type', async t => {
+    t.plan(1);
+
+    var window = await loadWindow();
+
+    process.once('uncaughtException', error => {
+        t.ok(error.message.includes('Invalid type: expected one of'), 'Got expected error');
+    });
+
+    await automage.get(window.document.body, 'Button with state', 'not a type');
+});
+
+test('automage.find - select all matching headings', async t => {
+    t.plan(1);
+
+    var window = await loadWindow();
+
+    var pageHeadings = await automage.find(window.document.body, 'My test page', 'heading');
+
+    t.equal(pageHeadings.length, 1, 'Page heading was found');
+});
+
+test('automage.find - if at least one element isn\'t found, an error is thrown', async t => {
+    t.plan(1);
+
+    var window = await loadWindow();
+
+    try {
+        await automage.find(window.document.body, 'I don\'t exist', 'heading');
+    } catch (error) {
+        t.equal(error.message, 'heading was not found matching "I don\'t exist" - Retrying timed out after 100ms'); 
+    } 
+});
+
+test('automage.findAll - select all matching headings', async t => {
+    t.plan(2);
+
+    var window = await loadWindow();
+
+    var pageHeadings = await automage.findAll(window.document.body, 'My test page', 'heading');
+
+    t.equal(pageHeadings.length, 1, 'Page heading was found');
+
+    var shouldBeEmpty = await automage.findAll(window.document.body, 'I don\'t exist', 'heading');
+
+    t.equal(shouldBeEmpty.length, 0, 'Page heading was found');
+});
+
 test('automage.click - click a button', async t => {
     t.plan(1);
 
@@ -145,6 +228,16 @@ test('automage.click - click a button', async t => {
     var newHeading = await automage.get(window.document.body, 'New Ui', 'heading');
 
     t.ok(newHeading, 'New heading was created upon button click');
+});
+
+test('automage.click - click a button containing a matched label', async t => {
+    t.plan(1);
+
+    var window = await loadWindow();
+
+    var button = await automage.click(window.document.body, 'Button with a label', 'label');
+
+    t.ok(button, 'button was found');
 });
 
 test('automage.click - if a single matching element isn\'t found, an error is thrown', async t => {
@@ -308,6 +401,44 @@ test('automage.changeValue - set the value of an element', async t => {
     t.equal(input.value, 'abc');
 });
 
+test('automage.changeValue - state', async t => {
+    t.plan(13);
+
+    var window = await loadWindow();
+
+    var input = await automage.get(window.document.body, 'Input with placeholder', 'field');
+
+    input.addEventListener('keydown', () => t.pass('recieved keydown event'));
+    input.addEventListener('keyup', () => t.pass('recieved keyup event'));
+    input.addEventListener('keypress', () => t.pass('recieved keypress event'));
+    input.addEventListener('input', () => t.pass('recieved input event'));
+
+    var input = await automage.changeValue(window.document.body, 'enabled', 'Input with placeholder', 'field', 'abc');
+
+    t.equal(input.value, 'abc');
+});
+
+test('automage.changeValue - callback', async t => {
+    t.plan(13);
+
+    var window = await loadWindow();
+
+    var input = await automage.get(window.document.body, 'Input with placeholder', 'field');
+
+    input.addEventListener('keydown', () => t.pass('recieved keydown event'));
+    input.addEventListener('keyup', () => t.pass('recieved keyup event'));
+    input.addEventListener('keypress', () => t.pass('recieved keypress event'));
+    input.addEventListener('input', () => t.pass('recieved input event'));
+
+    await new Promise(resolve => {
+        automage.changeValue(window.document.body, 'Input with placeholder', 'field', 'abc', function(error, input) {
+            t.equal(input.value, 'abc');
+            resolve();
+        });
+    });
+
+});
+
 test('automage.changeValue - clear the value of an element', async t => {
     t.plan(6);
 
@@ -323,6 +454,47 @@ test('automage.changeValue - clear the value of an element', async t => {
 
     await automage.changeValue(window.document.body, 'Input with placeholder', 'field', '');
     t.equal(input.value, '');
+});
+
+test('automage.changeValue - set the value of a date field', async t => {
+    t.plan(1);
+
+    var window = await loadWindow();
+
+    var date = new Date();
+    var select = await automage.changeValue(window.document.body, 'date field', 'field', date);
+
+    t.equal(new Date(select.value).toLocaleDateString(), date.toLocaleDateString());
+});
+
+test('automage.changeValue - set the value of a select', async t => {
+    t.plan(1);
+
+    var window = await loadWindow();
+
+    var select = await automage.changeValue(window.document.body, 'select field', 'field', 'Bar');
+
+    t.equal(select.value, 'bar');
+});
+
+test('automage.changeValue - set the value of a contenteditable', async t => {
+    t.plan(1);
+
+    var window = await loadWindow();
+
+    var editableElement = await automage.changeValue(window.document.body, 'Rich text editor', 'field', 'edited');
+
+    t.equal(editableElement.textContent, 'edited');
+});
+
+test('automage.focus - Focus an element', async t => {
+    t.plan(1);
+
+    var window = await loadWindow();
+
+    var input = await automage.focus(window.document.body, 'Input with placeholder', 'field');
+
+    t.equal(input, window.document.activeElement);
 });
 
 test('automage.isMissing - ensure something isnt found by the end of the wait time', async t => {
@@ -341,4 +513,79 @@ test('automage.isMissing - ensure something isnt found by the end of the wait ti
     var headingIsMissing = await automage.isMissing(window.document.body, 'New Ui', 'heading');
 
     t.ok(headingIsMissing, 'Heading was removed');
+});
+
+test('automage.get - adjacent cells don\'t label each-other', async t => {
+    t.plan(1);
+
+    var window = await loadWindow();
+
+    var foundElement = await automage.get(window.document.body, 'foo 1 bar 1', 'cell');
+    t.ok(foundElement, 'Element was found');
+});
+
+test('state filtering - enabled', async t => {
+    t.plan(1);
+
+    var window = await loadWindow();
+
+    var foundElement = await automage.get(window.document.body, 'enabled', 'Button with state', 'button');
+    t.ok(foundElement, 'Element was found');
+});
+
+test('state filtering - disabled', async t => {
+    t.plan(1);
+
+    var window = await loadWindow();
+
+    var foundElement = await automage.get(window.document.body, 'disabled', 'Button with state', 'button');
+    t.ok(foundElement, 'Element was found');
+});
+
+test('state filtering - first', async t => {
+    t.plan(1);
+
+    var window = await loadWindow();
+
+    var foundElement = await automage.get(window.document.body, 'first', 'Button with state', 'button');
+    t.ok(foundElement, 'Element was found');
+});
+
+test('state filtering - last', async t => {
+    t.plan(1);
+
+    var window = await loadWindow();
+
+    var foundElement = await automage.get(window.document.body, 'last', 'Button with state', 'button');
+    t.ok(foundElement, 'Element was found');
+});
+
+test('state filtering - 2nd', async t => {
+    t.plan(1);
+
+    var window = await loadWindow();
+
+    var foundElement = await automage.get(window.document.body, '2nd', 'Button with state', 'button');
+    t.ok(foundElement, 'Element was found');
+});
+
+test('state filtering - 2nd last', async t => {
+    t.plan(1);
+
+    var window = await loadWindow();
+
+    var foundElement = await automage.get(window.document.body, '2nd last', 'Button with state', 'button');
+    t.ok(foundElement, 'Element was found');
+});
+
+test('state filtering - Invalid state', async t => {
+    t.plan(1);
+
+    var window = await loadWindow();
+
+    process.once('uncaughtException', error => {
+        t.ok(error.message.includes('Invalid state: expected an optional state of'), 'Got expected error');
+    });
+
+    await automage.get(window.document.body, 'not a state', 'Button with state', 'button');
 });
