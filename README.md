@@ -6,16 +6,22 @@ Interact with DOM like a human.
 
 ## Usage
 
+Basic example:
 ```javascript
 var automage = require('automage');
+
+var homeLink = await automage.get(document, 'home', 'link');
+var enabledSaveButton = await automage.get(document, 'enabled', 'save', 'button');
+var thirdRowIsMissing = await automage.isMissing(document, '3rd', 'total', 'row');
+var changedUsernameInput = await automage.changeValue(document, 'username', 'input', 'MyUsername');
 ```
 
-Methods generally accept the arguments (target <Dom node>, description <string|RegExp>, type <string [ElementType](./elementTypes.js)>, callback)
+Methods *generally* accept the arguments (target <Dom node>, state? <string [State](./states.js)>, description <string|RegExp>, type <string [ElementType](./elementTypes.js)>, callback?) and resolve an element.
 
 All selection methods accept an optional timeout, eg:
 
 ```javascript
-automage.get(context, description, type, ..., timeout);
+automage.get(context, state, description, type, ..., timeout);
 ```
 
 The default timeout is 100ms (`automage.defaultWaitTimeout`), you can override this globally by setting it to your custom timeout, eg:
@@ -27,9 +33,9 @@ automage.defaultWaitTimeout = 200;
 All methods either return a promise, or accept an optional callback, eg:
 
 ```javascript
-await automage.get(context, description, type, ...);
+await automage.get(context, state, description, type, ...);
 // Or
-automage.get(context, description, type, ..., callback);
+automage.get(context, state, description, type, ..., callback);
 ```
 
 ## select a heading

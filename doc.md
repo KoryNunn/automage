@@ -1,4 +1,5 @@
 
+
 ## automage - available methods
 
 ```
@@ -48,8 +49,7 @@ var window = await loadWindow();
 try {
     await automage.get(window.document.body, 'My hidden text', 'text');
 } catch (error) {
-    error.message === 'text was not found matching "My hidden text" - Retrying timed out after 100ms' 
-}
+    error.message === 'text was not found matching "My hidden text" - Retrying timed out after 100ms'
 ```
 
 
@@ -61,8 +61,7 @@ var window = await loadWindow();
 try {
     await automage.get(window.document.body, 'hidden text', 'text');
 } catch (error) {
-    error.message === 'text was not found matching "hidden text" - Retrying timed out after 100ms' 
-}
+    error.message === 'text was not found matching "hidden text" - Retrying timed out after 100ms'
 ```
 
 
@@ -84,7 +83,18 @@ var window = await loadWindow();
 
 var coolContentSection = await automage.get(window.document.body, 'Cool content', 'section');
 
-coolContentSection // Page heading was found
+coolContentSection // Section was found
+```
+
+
+## automage.get - select a form by heading match
+
+```
+var window = await loadWindow();
+
+var coolForm = await automage.get(window.document.body, 'My cool form', 'form');
+
+coolForm // Form was found
 ```
 
 
@@ -96,8 +106,7 @@ var window = await loadWindow();
 try {
     await automage.get(window.document.body, 'I don\'t exist', 'heading');
 } catch (error) {
-    error.message === 'heading was not found matching "I don\'t exist" - Retrying timed out after 100ms' 
-}
+    error.message === 'heading was not found matching "I don\'t exist" - Retrying timed out after 100ms'
 ```
 
 
@@ -144,8 +153,7 @@ var window = await loadWindow();
 try {
     await automage.click(window.document.body, 'I don\'t exist', 'button');
 } catch (error) {
-    error.message === 'Could not find clickable button matching "I don\'t exist" - Retrying timed out after 100ms' 
-}
+    error.message === 'Could not find clickable button matching "I don\'t exist" - Retrying timed out after 100ms'
 ```
 
 
@@ -168,8 +176,7 @@ var window = await loadWindow();
 try {
     await automage.typeInto(window.document.body, 'I don\'t exist', 'field', 'some text');
 } catch (error) {
-    error.message === 'field was not found matching "I don\'t exist" - Retrying timed out after 100ms' 
-}
+    error.message === 'field was not found matching "I don\'t exist" - Retrying timed out after 100ms'
 ```
 
 
@@ -193,8 +200,7 @@ var window = await loadWindow();
 try {
     await automage.waitFor(window.document.body, 'New Async UI', 'heading', 100);
 } catch (error) {
-    error.message === 'heading was not found matching "New Async UI" - Retrying timed out after 100ms' 
-}
+    error.message === 'heading was not found matching "New Async UI" - Retrying timed out after 100ms'
 ```
 
 
@@ -206,10 +212,10 @@ var window = await loadWindow();
 var element = window.document.querySelector('[autofocus]');
 element.focus();
 
-element.addEventListener('keydown', () => // recieved keydown event);
-element.addEventListener('keyup', () => // recieved keyup event);
-element.addEventListener('keypress', () => // recieved keypress event);
-element.addEventListener('input', () => // recieved input event);
+element.addEventListener('keydown', () => t.pass('recieved keydown event'));
+element.addEventListener('keyup', () => t.pass('recieved keyup event'));
+element.addEventListener('keypress', () => t.pass('recieved keypress event'));
+element.addEventListener('input', () => t.pass('recieved input event'));
 
 var focuesedElement = await automage.pressKey(window.document.body, 'a');
 
@@ -238,10 +244,10 @@ var window = await loadWindow();
 var element = window.document.querySelector('[autofocus]');
 element.focus();
 
-element.addEventListener('keydown', () => // recieved keydown event);
-element.addEventListener('keyup', () => // recieved keyup event);
-element.addEventListener('keypress', () => // recieved keypress event);
-element.addEventListener('input', () => // recieved input event);
+element.addEventListener('keydown', () => t.pass('recieved keydown event'));
+element.addEventListener('keyup', () => t.pass('recieved keyup event'));
+element.addEventListener('keypress', () => t.pass('recieved keypress event'));
+element.addEventListener('input', () => t.pass('recieved input event'));
 
 var focuesedElement = await automage.pressKeys(window.document.body, 'abc');
 
@@ -287,7 +293,7 @@ element.focus();
 var previouslyFocuesedElement = await automage.blur(window.document.body);
 var newFocuesedElement = await automage.getFocusedElement(window.document.body);
 
-newFocuesedElement !== previouslyFocuesedElement // previously focused element lost focus
+newFocuesedElement === previouslyFocuesedElement // Not previously focused element lost focus
 ```
 
 
@@ -298,10 +304,10 @@ var window = await loadWindow();
 
 var input = await automage.get(window.document.body, 'Input with placeholder', 'field');
 
-input.addEventListener('keydown', () => // recieved keydown event);
-input.addEventListener('keyup', () => // recieved keyup event);
-input.addEventListener('keypress', () => // recieved keypress event);
-input.addEventListener('input', () => // recieved input event);
+input.addEventListener('keydown', () => t.pass('recieved keydown event'));
+input.addEventListener('keyup', () => t.pass('recieved keyup event'));
+input.addEventListener('keypress', () => t.pass('recieved keypress event'));
+input.addEventListener('input', () => t.pass('recieved input event'));
 
 var input = await automage.changeValue(window.document.body, 'Input with placeholder', 'field', 'abc');
 
@@ -317,10 +323,10 @@ var window = await loadWindow();
 var input = await automage.changeValue(window.document.body, 'Input with placeholder', 'field', 'abc');
 input.value === 'abc' 
 
-input.addEventListener('keydown', () => // recieved keydown event);
-input.addEventListener('keyup', () => // recieved keyup event);
-input.addEventListener('keypress', () => // recieved keypress event);
-input.addEventListener('input', () => // recieved input event);
+input.addEventListener('keydown', () => t.pass('recieved keydown event'));
+input.addEventListener('keyup', () => t.pass('recieved keyup event'));
+input.addEventListener('keypress', () => t.pass('recieved keypress event'));
+input.addEventListener('input', () => t.pass('recieved input event'));
 
 await automage.changeValue(window.document.body, 'Input with placeholder', 'field', '');
 input.value === ''
@@ -344,3 +350,74 @@ var headingIsMissing = await automage.isMissing(window.document.body, 'New Ui', 
 
 headingIsMissing // Heading was removed
 ```
+
+
+## automage.get - adjacent cells don\'t label each-other
+
+```
+var window = await loadWindow();
+
+var foundElement = await automage.get(window.document.body, 'foo 1 bar 1', 'cell');
+foundElement // Element was found
+```
+
+
+## state filtering - enabled
+
+```
+var window = await loadWindow();
+
+var foundElement = await automage.get(window.document.body, 'enabled', 'Button with state', 'button');
+foundElement // Element was found
+```
+
+
+## state filtering - disabled
+
+```
+var window = await loadWindow();
+
+var foundElement = await automage.get(window.document.body, 'disabled', 'Button with state', 'button');
+foundElement // Element was found
+```
+
+
+## state filtering - first
+
+```
+var window = await loadWindow();
+
+var foundElement = await automage.get(window.document.body, 'first', 'Button with state', 'button');
+foundElement // Element was found
+```
+
+
+## state filtering - last
+
+```
+var window = await loadWindow();
+
+var foundElement = await automage.get(window.document.body, 'last', 'Button with state', 'button');
+foundElement // Element was found
+```
+
+
+## state filtering - 2nd
+
+```
+var window = await loadWindow();
+
+var foundElement = await automage.get(window.document.body, '2nd', 'Button with state', 'button');
+foundElement // Element was found
+```
+
+
+## state filtering - 2nd last
+
+```
+var window = await loadWindow();
+
+var foundElement = await automage.get(window.document.body, '2nd last', 'Button with state', 'button');
+foundElement // Element was found
+```
+

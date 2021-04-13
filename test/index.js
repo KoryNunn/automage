@@ -342,3 +342,66 @@ test('automage.isMissing - ensure something isnt found by the end of the wait ti
 
     t.ok(headingIsMissing, 'Heading was removed');
 });
+
+test('automage.get - adjacent cells don\'t label each-other', async t => {
+    t.plan(1);
+
+    var window = await loadWindow();
+
+    var foundElement = await automage.get(window.document.body, 'foo 1 bar 1', 'cell');
+    t.ok(foundElement, 'Element was found');
+});
+
+test('state filtering - enabled', async t => {
+    t.plan(1);
+
+    var window = await loadWindow();
+
+    var foundElement = await automage.get(window.document.body, 'enabled', 'Button with state', 'button');
+    t.ok(foundElement, 'Element was found');
+});
+
+test('state filtering - disabled', async t => {
+    t.plan(1);
+
+    var window = await loadWindow();
+
+    var foundElement = await automage.get(window.document.body, 'disabled', 'Button with state', 'button');
+    t.ok(foundElement, 'Element was found');
+});
+
+test('state filtering - first', async t => {
+    t.plan(1);
+
+    var window = await loadWindow();
+
+    var foundElement = await automage.get(window.document.body, 'first', 'Button with state', 'button');
+    t.ok(foundElement, 'Element was found');
+});
+
+test('state filtering - last', async t => {
+    t.plan(1);
+
+    var window = await loadWindow();
+
+    var foundElement = await automage.get(window.document.body, 'last', 'Button with state', 'button');
+    t.ok(foundElement, 'Element was found');
+});
+
+test('state filtering - 2nd', async t => {
+    t.plan(1);
+
+    var window = await loadWindow();
+
+    var foundElement = await automage.get(window.document.body, '2nd', 'Button with state', 'button');
+    t.ok(foundElement, 'Element was found');
+});
+
+test('state filtering - 2nd last', async t => {
+    t.plan(1);
+
+    var window = await loadWindow();
+
+    var foundElement = await automage.get(window.document.body, '2nd last', 'Button with state', 'button');
+    t.ok(foundElement, 'Element was found');
+});

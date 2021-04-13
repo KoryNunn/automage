@@ -2,19 +2,7 @@ var list = ['ul', 'ol', '[role=list]'];
 var item = ['li', '[role=listitem]'];
 var button = ['button', 'a', 'input[type=button]', '[role=button]', '[tabindex]'];
 var link = ['a', 'button', 'input[type=button]', '[role=button]'];
-var notLabel = [
-    `:not(a):not(button):not([type=button]):not([role=button])`,
-    `${list.map(type => `:not(${type})`).join('')}`,
-    `${item.map(type => `:not(${type})`).join('')}`,
-    `${button.map(type => `:not(${type})`).join('')}`,
-    `${link.map(type => `:not(${type})`).join('')}`
-].join('');
-var label = [
-    `label${notLabel}`,
-    `span${notLabel}`,
-    `td${notLabel}`,
-    `${notLabel}`
-];
+var cell = ['td', 'th', '[role=cell]'];
 var heading = ['[role=heading]', 'h1', 'h2', 'h3', 'h4'];
 var header = ['header', '[role=banner]'];
 var footer = ['footer'];
@@ -23,7 +11,6 @@ var field = ['input', 'textarea', 'select', 'label', '[role=textbox]', '[content
 var section = ['section'];
 var form = ['form', '[role=form]'];
 var row = ['tr', '[role=row]'];
-var cell = ['td', 'th', '[role=cell]'];
 var article = ['[role=article]', 'article'];
 var region = ['[role=region]'];
 var dialog = ['[role=dialog]'];
@@ -31,6 +18,26 @@ var area = [section, form, article, region, dialog].flat();
 var navigation = ['[role=navigation]'];
 var all = ['*'];
 var text = ['p', 'section', 'article', 'aside', 'header', 'footer', 'span', 'div', '*'];
+var notLabel = [
+        list,
+        item,
+        button,
+        link,
+        cell,
+        row,
+        article,
+        region,
+        dialog,
+        navigation
+    ]
+    .flatMap(typeList => typeList.map(type => `:not(${type})`))
+    .join('');
+var label = [
+    `label${notLabel}`,
+    `span${notLabel}`,
+    `td${notLabel}`,
+    `${notLabel}`
+];
 
 // Each of the below is a valid UI 'Type' that can be used with automage.
 module.exports = {
