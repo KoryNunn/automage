@@ -1,21 +1,18 @@
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.automage = f()}})(function(){var define,module,exports;return (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
+module.exports = {
+    enabled: element => !element.closest('[disabled]'),
+    disabled: element => element.closest('[disabled]'),
+    first: (element, otherMatchedElements) => otherMatchedElements[0] === element,
+    last: (element, otherMatchedElements) => otherMatchedElements[otherMatchedElements.length - 1] === element,
+    '(\\d+)(?:st|nd|rd)': (element, otherMatchedElements, parameters) => otherMatchedElements[parseInt(parameters[0]) - 1] === element,
+    '(\\d+)(?:st|nd|rd) last': (element, otherMatchedElements, parameters) => otherMatchedElements[otherMatchedElements.length - parseInt(parameters[0])] === element
+};
+},{}],2:[function(require,module,exports){
 var list = ['ul', 'ol', '[role=list]'];
 var item = ['li', '[role=listitem]'];
 var button = ['button', 'a', 'input[type=button]', '[role=button]', '[tabindex]'];
 var link = ['a', 'button', 'input[type=button]', '[role=button]'];
-var notLabel = [
-    `:not(a):not(button):not([type=button]):not([role=button])`,
-    `${list.map(type => `:not(${type})`).join('')}`,
-    `${item.map(type => `:not(${type})`).join('')}`,
-    `${button.map(type => `:not(${type})`).join('')}`,
-    `${link.map(type => `:not(${type})`).join('')}`
-].join('');
-var label = [
-    `label${notLabel}`,
-    `span${notLabel}`,
-    `td${notLabel}`,
-    `${notLabel}`
-];
+var cell = ['td', 'th', '[role=cell]'];
 var heading = ['[role=heading]', 'h1', 'h2', 'h3', 'h4'];
 var header = ['header', '[role=banner]'];
 var footer = ['footer'];
@@ -24,7 +21,6 @@ var field = ['input', 'textarea', 'select', 'label', '[role=textbox]', '[content
 var section = ['section'];
 var form = ['form', '[role=form]'];
 var row = ['tr', '[role=row]'];
-var cell = ['td', 'th', '[role=cell]'];
 var article = ['[role=article]', 'article'];
 var region = ['[role=region]'];
 var dialog = ['[role=dialog]'];
@@ -32,6 +28,26 @@ var area = [section, form, article, region, dialog].flat();
 var navigation = ['[role=navigation]'];
 var all = ['*'];
 var text = ['p', 'section', 'article', 'aside', 'header', 'footer', 'span', 'div', '*'];
+var notLabel = [
+        list,
+        item,
+        button,
+        link,
+        cell,
+        row,
+        article,
+        region,
+        dialog,
+        navigation
+    ]
+    .flatMap(typeList => typeList.map(type => `:not(${type})`))
+    .join('');
+var label = [
+    `label${notLabel}`,
+    `span${notLabel}`,
+    `td${notLabel}`,
+    `${notLabel}`
+];
 
 // Each of the below is a valid UI 'Type' that can be used with automage.
 module.exports = {
@@ -57,10 +73,11 @@ module.exports = {
     all, // Any element. This is a very vague selector and usually wont do what you want.
     text // Things that usually hold text. This is a very vague selector and sometimes wont do what you want.
 };
-},{}],2:[function(require,module,exports){
+},{}],3:[function(require,module,exports){
 var righto = require('righto');
 var stable = require('stable');
 var types = require('./elementTypes');
+var states = require('./elementStates');
 
 // List of selectors ordered by their likeliness to be the target of text/click/value selection
 var textWeighting = ['h1', 'h2', 'h3', 'h4', 'label', 'p', 'a', 'button', '[role=button]'];
@@ -71,14 +88,47 @@ var noElementOfType = 'no elements of type ';
 
 var nonTextInputs = ['date', 'range', 'select'];
 
+function debug(...args){
+    if(automage.debug){
+        /* c8 ignore next 2 */
+        console.log(args);
+    }
+}
+
 function getDocument(context){
     return context.ownerDocument || (context.defaultView ? context : null);
 }
 
 function getFocusedElement(context, callback) {
-    const focusedElement = getDocument(context).activeElement;
+    var focusedElement = getDocument(context).activeElement;
 
     return callback ? callback(null, focusedElement) : righto.from(focusedElement);
+}
+
+function getTypeSelectors(type) {
+    if(!(type in types)) {
+        throw new Error(`Invalid type: expected one of ${Object.keys(types)}, saw ${type}`);
+    }
+
+    return types[type];
+}
+
+function getStateCheck(state) {
+    if(state == null) {
+        return null;
+    }
+
+    var [stateType, parameters] = state.match();
+    var [statePattern, parameters] = Object.keys(states).flatMap(statePattern => {
+        var match = state.match(statePattern);
+        return match ? [statePattern, Array.from(match).slice(1)] : []
+    });
+
+    if(!(statePattern in states)) {
+        throw new Error(`Invalid state: expected an optional state of ${Object.keys(states)}, saw ${state}`);
+    }
+
+    return (element, otherMatchedElements) => states[statePattern](element, otherMatchedElements, parameters);
 }
 
 function pressKey(context, key, fullValue, callback) {
@@ -151,18 +201,17 @@ function pressKeys(context, keys, callback) {
     return callback ? keysPressed(callback) : keysPressed;
 }
 
-function typeInto(context, description, state, type, value, callback) {
+function typeInto(context, state, description, type, value, callback) {
     if(!(typeof value === 'string')) {
         callback = value;
         value = type;
-        type = state;
+        type = description;
+        description = state;
         state = null;
     }
     
-    if (automage.debug) {
-        console.log('typeInto', description, type);
-    }
-    var focused = righto(focus, context, description, state, type);
+    debug('typeInto', state, description, type);
+    var focused = righto(focus, context, state, description, type);
     var keysPressed = righto(pressKeys, context, value, righto.after(focused));
 
     return callback ? keysPressed(callback) : keysPressed;
@@ -229,17 +278,13 @@ function isTextNode(node){
 }
 
 function matchDirectChildTextNodes(element, description){
-    if(element.closest('[hidden]')){
-        return;
-    }
-
     var directChildText = Array.from(element.childNodes)
         .filter(isTextNode)
         .map(textNode => textNode.textContent)
         .join('');
 
     if(checkMatchValue(directChildText, description)){
-        return  2;
+        return 2;
     }
 }
 
@@ -306,11 +351,8 @@ function findMatchingElements(description, elementsList, onlyScanDecendants) {
         .sort((a, b) => a[0] - b[0]);
 }
 
-function getElementTextWeight(element) {
-    var index = textWeighting.findIndex(selector => element.matches(selector));
-    return textWeighting.length - (index < 0 ? Infinity : index);
-}
-
+// ToDo: add coverage.
+/* c8 ignore next 4 */
 function getElementClickWeight(element) {
     var index = clickWeighting.findIndex(selector => element.matches(selector));
     return clickWeighting.length - (index < 0 ? Infinity : index);
@@ -321,14 +363,10 @@ function getElementValueWeight(element) {
     return valueWeighting.length - (index < 0 ? Infinity : index);
 }
 
-function findAllMatchingElements(context, description, state, type) {
-    if(!(typeof type === 'string')) {
-        type = state;
-        state = null;
-    }
-    
-    var elementTypes = types[type];
-    var elements = Array.from(context.querySelectorAll(elementTypes))
+function findAllMatchingElements(context, state, description, type) {
+    var typeSelectors = getTypeSelectors(type);
+    var stateCheck = getStateCheck(state);
+    var elements = Array.from(context.querySelectorAll(typeSelectors))
         .filter(element => !element.closest('[hidden]'));
 
     var matches = findMatchingElements(description, elements, false);
@@ -350,65 +388,60 @@ function findAllMatchingElements(context, description, state, type) {
 
     var matchesByTypePriority = stable(matchesWithParentNodesFiltered,
         function(a, b){
-            var aTypeIndex = elementTypes.findIndex(type => a[1].matches(type));
-            var bTypeIndex = elementTypes.findIndex(type => b[1].matches(type));
+            var aTypeIndex = typeSelectors.findIndex(type => a[1].matches(type));
+            var bTypeIndex = typeSelectors.findIndex(type => b[1].matches(type));
             aTypeIndex = aTypeIndex < 0 ? Infinity : aTypeIndex;
             bTypeIndex = bTypeIndex < 0 ? Infinity : bTypeIndex;
             return aTypeIndex - bTypeIndex;
         }
     );
 
-    return matchesByTypePriority.map(result => result[1]);
+    var matchedElementsByTypePriority = matchesByTypePriority.map(result => result[1]);
+    return matchedElementsByTypePriority
+        .filter(element => stateCheck == null || stateCheck(element, matchedElementsByTypePriority));
 }
 
-function findAll(context, description, state, type, callback){
+function findAll(context, state, description, type, callback){
     if(!(typeof type === 'string')) {
-        type = state;
+        callback = type;
+        type = description;
+        description = state;
         state = null;
     }
-    
-    if (automage.debug) {
-        console.log('findAll', description, type);
-    }
+
+    debug('findAll', state, description, type);
+
+    var typeSelectors = getTypeSelectors(type);
 
     var results = righto.from(null).get(() => {
-        if(!types[type]) {
-            return righto.fail(new Error(`${type} is not a valid ui type`));
-        }
-
-        var matched = findAllMatchingElements(context, description, state, type);
+        var matched = findAllMatchingElements(context, state, description, type);
 
         return matched;
-    })
+    });
 
     return callback ? results(callback) : results;
 }
 
-function find(context, description, state, type, callback) {
+function find(context, state, description, type, callback) {
     if(!(typeof type === 'string')) {
         callback = type;
-        type = state;
+        type = description;
+        description = state;
         state = null;
     }
-    
-    if (automage.debug) {
-        console.log('find', description, type);
-    }
+
+    debug('find', state, description, type);
+
+    var typeSelectors = getTypeSelectors(type);
 
     var result = righto.sync(elements => {
-        var elementTypes = types[type];
-
-        if(!elementTypes) {
-            return righto.fail(new Error(`${type} is not a valid ui type`));
-        }
-
-        var matched = findAllMatchingElements(context, description, state, type);
+        var matched = findAllMatchingElements(context, state, description, type);
 
         if(!matched.length){
             return righto.fail(new Error(`${type} was not found matching "${description}"`));
         }
 
-        return matched.filter(element => element.matches(elementTypes));
+        return matched.filter(element => element.matches(typeSelectors));
     });
 
     return callback ? result(callback) : result;
@@ -424,27 +457,22 @@ function filterComponents(elementTypes, elements){
     }, [])
 }
 
-function get(context, description, state, type, callback) {
+function get(context, state, description, type, callback) {
     if(!(typeof type === 'string')) {
         callback = type;
-        type = state;
+        type = description;
+        description = state;
         state = null;
     }
-    
-    if (automage.debug) {
-        console.log('get', description, type);
-    }
-    var elements = righto(find, context, description, state, type);
-    var elementTypes = types[type];
 
-    if(!elementTypes) {
-        return righto.fail(new Error(`${type} is not a valid ui type`));
-    }
+    debug('get', state, description, type);
 
+    var typeSelectors = getTypeSelectors(type);
+    var elements = righto(find, context, state, description, type);
     var result = righto.sync(() =>
-            findAllMatchingElements(context, description, state, type, true)
+            findAllMatchingElements(context, state, description, type, true)
         )
-        .get(filterComponents.bind(null, elementTypes))
+        .get(filterComponents.bind(null, typeSelectors))
         .get(elements => {
             if(elements.length > 1) {
                 return righto.fail(new Error(`More than one ${type} was found matching "${description}"`));
@@ -459,18 +487,17 @@ function get(context, description, state, type, callback) {
     return callback ? result(callback) : result;
 }
 
-function isMissing(context, description, state, type, callback) {
+function isMissing(context, state, description, type, callback) {
     if(!(typeof type === 'string')) {
         callback = type;
-        type = state;
+        type = description;
+        description = state;
         state = null;
     }
-    
-    if (automage.debug) {
-        console.log('isMissing', description, type);
-    }
 
-    var result = righto.handle(righto(get, context, description, state, type), (error, done) => done())
+    debug('isMissing', state, description, type);
+
+    var result = righto.handle(righto(get, context, state, description, type), (error, done) => done())
         .get(result => result
             ? righto.fail(new Error(`A ${type} was found matching "${description}"`))
             : true
@@ -479,44 +506,22 @@ function isMissing(context, description, state, type, callback) {
     return callback ? result(callback) : result;
 }
 
-function setValue(context, description, state, type, value, callback) {
-    if(!(typeof type === 'string')) {
-        callback = type;
-        type = state;
-        state = null;
-    }
-    
-    if (automage.debug) {
-        console.log('setValue', description, type);
-    }
-    var focused = righto(focus, context, description, state, type);
-    var valueSet = focused.get(target => {
-        target.value = value;
-        return target;
-    })
-
-    return callback ? valueSet(callback) : valueSet;
-}
-
 function wait(time, callback) {
     setTimeout(callback, time || 0);
 }
 
-function click(context, description, state, type, callback) {
+function click(context, state, description, type, callback) {
     if(!(typeof type === 'string')) {
         callback = type;
-        type = state;
+        type = description;
+        description = state;
         state = null;
     }
-    
-    if (automage.debug) {
-        console.log('click', description, type);
-    }
-    var clickTargets = righto(findAll, context, description, state, type);
+
+    debug('click', state, description, type);
+    var clickTargets = righto(findAll, context, state, description, type);
     var clickedElement = clickTargets.get(elements => {
-        var sorted = elements.sort(function(a, b) {
-            return getElementClickWeight(b) - getElementClickWeight(a);
-        })
+        var sorted = elements.sort((a, b) => getElementClickWeight(b) - getElementClickWeight(a));
 
         var element = sorted[0];
 
@@ -525,6 +530,8 @@ function click(context, description, state, type, callback) {
         }
 
         // SVG paths
+        // ToDo: add coverage.
+        /* c8 ignore next 3 */
         while(!element.click){
             element = element.parentNode;
         }
@@ -551,19 +558,16 @@ function click(context, description, state, type, callback) {
     return callback ? result(callback) : result;
 }
 
-function focus(context, description, state, type, callback) {
+function focus(context, state, description, type, callback) {
     if(!(typeof type === 'string')) {
         callback = type;
-        type = state;
+        type = description;
+        description = state;
         state = null;
     }
-
-    console.log('foo')
     
-    if (automage.debug) {
-        console.log('focus', description, type);
-    }
-    var elements = righto(findAll, context, description, state, type)
+    debug('focus', state, description, type);
+    var elements = righto(findAll, context, state, description, type)
 
     var focuesdElement = elements.get(elements => {
         var result = elements
@@ -619,6 +623,11 @@ function encodeDateValue(date){
     return value;
 }
 
+function changeContenteditableValue(element, value, callback) {
+    element.textContent = value;
+    callback(null, element);
+}
+
 function encodeSelectValue(label, element){
     var selectedOption = Array.from(element.querySelectorAll('option'))
         .find(option => matchElementContent(option, label));
@@ -633,30 +642,27 @@ var typeEncoders = {
 
 function changeNonTextInput(element, value, callback){
     if(element.hasAttribute('contenteditable')){
-        return changeContenteditableValue(element, value, callback)
+        return changeContenteditableValue(element, value, callback);
     }
-
-    var value = null;
 
     if(element.type in typeEncoders){
         value = typeEncoders[element.type](value, element);
-    } else {
-        value = value;
     }
-    return changeInputValue(element, value, callback);
+
+    changeInputValue(element, value, callback);
 }
 
-function changeValue(context, description, state, type, value, callback) {
-    if(!(typeof type === 'string')) {
-        callback = type;
-        type = state;
+function changeValue(context, state, description, type, value, callback) {
+    if(!(typeof value === 'string')) {
+        callback = value;
+        value = type;
+        type = description;
+        description = state;
         state = null;
     }
-    
-    if (automage.debug) {
-        console.log('changeValue', description, type);
-    }
-    var focusedElement = righto(focus, context, description, state, type);
+
+    debug('changeValue', state, description, type);
+    var focusedElement = righto(focus, context, state, description, type);
     var valueChangedElement = focusedElement.get(element => {
         if(
             element.nodeName === 'INPUT' && ~nonTextInputs.indexOf(element.type) ||
@@ -700,12 +706,7 @@ function blur(context, callback) {
 }
 
 function waitFor(fn){
-    return function(context, description, state, type, ...args){
-        if(!(typeof type === 'string')) {
-            type = state;
-            state = null;
-        }
-        
+    return function(...args){
         var timeoutIndex = args.length-1;
 
         if(typeof args[timeoutIndex] === 'function') {
@@ -726,7 +727,7 @@ function waitFor(fn){
 
 
         function retry(callback){
-            var result = righto.handle(righto(fn, context, description, state, type, ...args), (error, callback) => {
+            var result = righto.handle(righto(fn, ...args), (error, callback) => {
                 if(Date.now() - startTime > timeout){
                     return callback(new Error(`${error.message} - Retrying timed out after ${timeout}ms`));
                 }
@@ -745,7 +746,7 @@ function waitFor(fn){
     }
 }
 
-const automage = {
+var automage = {
     defaultWaitTimeout: 100,
     defaultClickWaitTimeout: 10,
     defaultKeyPressWaitTimeout: 10,
@@ -766,7 +767,7 @@ const automage = {
 
 module.exports = automage;
 
-},{"./elementTypes":1,"righto":5,"stable":7}],3:[function(require,module,exports){
+},{"./elementStates":1,"./elementTypes":2,"righto":6,"stable":8}],4:[function(require,module,exports){
 function checkIfPromise(promise){
     if(!promise || typeof promise !== 'object' || typeof promise.then !== 'function'){
         throw "Abbott requires a promise to break. It is the only thing Abbott is good at.";
@@ -792,7 +793,7 @@ module.exports = function abbott(promiseOrFn){
         promise.then(callback.bind(null, null), callback);
     };
 };
-},{}],4:[function(require,module,exports){
+},{}],5:[function(require,module,exports){
 // shim for using process in browser
 var process = module.exports = {};
 
@@ -978,7 +979,7 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],5:[function(require,module,exports){
+},{}],6:[function(require,module,exports){
 (function (global){(function (){
 var abbott = require('abbott');
 require('setimmediate');
@@ -1614,7 +1615,7 @@ for(var key in righto){
 
 module.exports = righto;
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"abbott":3,"setimmediate":6}],6:[function(require,module,exports){
+},{"abbott":4,"setimmediate":7}],7:[function(require,module,exports){
 (function (process,global){(function (){
 (function (global, undefined) {
     "use strict";
@@ -1804,7 +1805,7 @@ module.exports = righto;
 }(typeof self === "undefined" ? typeof global === "undefined" ? this : global : self));
 
 }).call(this)}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"_process":4}],7:[function(require,module,exports){
+},{"_process":5}],8:[function(require,module,exports){
 //! stable.js 0.1.8, https://github.com/Two-Screen/stable
 //! © 2018 Angry Bytes and contributors. MIT licensed.
 
@@ -1915,5 +1916,5 @@ module.exports = righto;
 
 })));
 
-},{}]},{},[2])(2)
+},{}]},{},[3])(3)
 });
