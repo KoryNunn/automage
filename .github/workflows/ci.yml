@@ -41,7 +41,7 @@ jobs:
     - run: npm i
     - run: npm run bundle
     - name: Commit bundled code
-    - run: |
+      run: |
         git add automage.js
         git commit -m "Updated automage.js"
         git push 
