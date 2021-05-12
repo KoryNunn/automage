@@ -464,7 +464,7 @@ test('automage.changeValue - set the value of a date field', async t => {
     var date = new Date();
     var select = await automage.changeValue(window.document.body, 'date field', 'field', date);
 
-    t.equal(new Date(select.value).toLocaleDateString(), date.toLocaleDateString());
+    t.equal(new Date(select.value).toISOString().replace(/T.*/, ''), date.toISOString().replace(/T.*/, ''));
 });
 
 test('automage.changeValue - set the value of a select', async t => {
