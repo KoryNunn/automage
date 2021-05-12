@@ -23,7 +23,7 @@ var form = ['form', '[role=form]'];
 var row = ['tr', '[role=row]'];
 var article = ['[role=article]', 'article'];
 var region = ['[role=region]'];
-var dialog = ['[role=dialog]'];
+var dialog = ['[role=dialog]', '[role=alertdialog]', '[aria-modal]'];
 var area = [section, form, article, region, dialog].flat();
 var navigation = ['[role=navigation]'];
 var all = ['*'];
