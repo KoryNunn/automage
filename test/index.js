@@ -515,6 +515,19 @@ test('automage.isMissing - ensure something isnt found by the end of the wait ti
     t.ok(headingIsMissing, 'Heading was removed');
 });
 
+test('automage.isMissing - only succeeds when the find matched no elements', async t => {
+    t.plan(1);
+
+    var window = await loadWindow();
+
+    try {
+        await automage.isMissing(window.document.body, /a/, 'text');
+    } catch (error) {
+        t.ok('isMissing failes where multiple elements are found');
+    }
+
+});
+
 test('automage.get - adjacent cells don\'t label each-other', async t => {
     t.plan(1);
 

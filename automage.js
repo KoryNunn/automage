@@ -497,11 +497,13 @@ function isMissing(context, state, description, type, callback) {
 
     debug('isMissing', state, description, type);
 
-    var result = righto.handle(righto(get, context, state, description, type), (error, done) => done())
-        .get(result => result
-            ? righto.fail(new Error(`A ${type} was found matching "${description}"`))
-            : true
-        );
+    var foundElements = righto(findAll, context, state, description, type);
+
+    var result = foundElements.get(result =>
+        result.length
+        ? righto.fail(new Error(`A ${type} was found matching "${description}"`))
+        : true
+    );
 
     return callback ? result(callback) : result;
 }
