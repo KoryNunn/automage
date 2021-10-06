@@ -74,6 +74,26 @@ test('automage.get - cant select text within a [hidden]', async t => {
     }
 });
 
+test('automage.get - cant select text within a [aria-hidden=true]', async t => {
+    t.plan(1);
+
+    var window = await loadWindow();
+
+    try {
+        await automage.get(window.document.body, 'Aria hidden', 'heading');
+    } catch (error) {
+        t.equal(error.message, 'heading was not found matching "Aria hidden" - Retrying timed out after 100ms')
+    }
+});
+
+test('automage.get - can select text within a [aria-hidden=false]', async t => {
+    t.plan(1);
+
+    var window = await loadWindow();
+
+    t.ok(await automage.get(window.document.body, 'Aria not hidden', 'heading'), 'Aria hidden=false is selectable');
+});
+
 test('automage.get - cant select aria label within a [hidden]', async t => {
     t.plan(1);
 

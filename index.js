@@ -12,6 +12,8 @@ var noElementOfType = 'no elements of type ';
 
 var nonTextInputs = ['date', 'range', 'select'];
 
+var hiddenSelector = '[hidden],[aria-hidden=true]';
+
 function debug(...args){
     if(automage.debug){
         /* c8 ignore next 2 */
@@ -155,7 +157,7 @@ function getElementVisibleText(element){
             return getElementVisibleText(node);
         }
 
-        if(node.textContent && !node.parentElement.closest('[hidden]')) {
+        if(node.textContent && !node.parentElement.closest(hiddenSelector)) {
             return node.textContent;
         }
 
@@ -218,7 +220,7 @@ function matchDecendentLabels(element, description, onlyScanDecendants){
             description,
             Array.from(element.children)
                 .filter(node =>
-                    !node.closest('[hidden]') &&
+                    !node.closest(hiddenSelector) &&
                     node.matches &&
                     node.matches(types.label.join())
                 ),
@@ -237,7 +239,7 @@ function matchLabelFor(element, description){
         findMatchingElements(
             description,
             Array.from(getDocument(element).querySelectorAll(`label[for="${id}"]`))
-                .filter(node => !node.closest('[hidden]')
+                .filter(node => !node.closest(hiddenSelector)
                 ),
             true
         ).length
@@ -291,7 +293,7 @@ function findAllMatchingElements(context, state, description, type) {
     var typeSelectors = getTypeSelectors(type);
     var stateCheck = getStateCheck(state);
     var elements = Array.from(context.querySelectorAll(typeSelectors))
-        .filter(element => !element.closest('[hidden]'));
+        .filter(element => !element.closest(hiddenSelector));
 
     var matches = findMatchingElements(description, elements, false);
 
