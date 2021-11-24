@@ -7,7 +7,8 @@ var heading = ['[role=heading]', 'h1', 'h2', 'h3', 'h4'];
 var header = ['header', '[role=banner]'];
 var footer = ['footer'];
 var image = ['img', 'svg', '[role=img]'];
-var field = ['input', 'textarea', 'select', 'label', '[role=textbox]', '[contenteditable]'];
+var input = ['input', 'textarea', 'select', '[role=textbox]', '[contenteditable]'];
+var field = [...input, 'label'];
 var section = ['section'];
 var form = ['form', '[role=form]'];
 var row = ['tr', '[role=row]'];
@@ -28,7 +29,13 @@ var notLabel = [
         article,
         region,
         dialog,
-        navigation
+        navigation,
+        section,
+        header,
+        footer,
+        image,
+        form,
+        input
     ]
     .flatMap(typeList => typeList.map(type => `:not(${type})`))
     .join('');
