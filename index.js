@@ -214,7 +214,7 @@ function matchDirectChildTextNodes(element, description){
     }
 }
 
-function matchDecendentLabels(element, description, onlyScanDecendants){
+function matchDecendentText(element, description, onlyScanDecendants){
     if(
         findMatchingElements(
             description,
@@ -222,7 +222,7 @@ function matchDecendentLabels(element, description, onlyScanDecendants){
                 .filter(node =>
                     !node.closest(hiddenSelector) &&
                     node.matches &&
-                    node.matches(types.label.join())
+                    node.matches(types.text.join())
                 ),
             onlyScanDecendants
         ).length
@@ -255,7 +255,7 @@ function matchElementContent(element, description, onlyScanDecendants) {
         (
             matchTextContent(element, description) ||
             matchDirectChildTextNodes(element, description) ||
-            matchDecendentLabels(element, description, onlyScanDecendants) ||
+            matchDecendentText(element, description, onlyScanDecendants) ||
             matchBesideLabels(element, description, onlyScanDecendants) ||
 
             // the labelFor check can include already-scanned elements
