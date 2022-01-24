@@ -87,7 +87,6 @@ var types = require('./elementTypes');
 var states = require('./elementStates');
 
 // List of selectors ordered by their likeliness to be the target of text/click/value selection
-var textWeighting = ['h1, h2, h3, h4', 'label', 'p', 'a', 'button, [role=button]'];
 var clickWeighting = ['button, [role=button], [type=button], a', 'input', 'h1, h2, h3, h4', 'i', 'label'];
 var valueWeighting = ['input, textarea, select', '[contenteditable]', 'label'];
 
