@@ -4,9 +4,8 @@ var types = require('./elementTypes');
 var states = require('./elementStates');
 
 // List of selectors ordered by their likeliness to be the target of text/click/value selection
-var textWeighting = ['h1', 'h2', 'h3', 'h4', 'label', 'p', 'a', 'button', '[role=button]'];
-var clickWeighting = ['button', '[role=button]', 'input', 'a', 'h1', 'h2', 'h3', 'h4', 'i', 'label'];
-var valueWeighting = ['input', 'textarea', 'select', '[contenteditable]', 'label'];
+var clickWeighting = ['button, [role=button], [type=button], a', 'input', 'h1, h2, h3, h4', 'i', 'label'];
+var valueWeighting = ['input, textarea, select', '[contenteditable]', 'label'];
 
 var noElementOfType = 'no elements of type ';
 
@@ -135,7 +134,7 @@ function typeInto(context, state, description, type, value, callback) {
         description = state;
         state = null;
     }
-    
+
     debug('typeInto', state, description, type);
     var focused = righto(focus, context, state, description, type);
     var keysPressed = righto(pressKeys, context, value, righto.after(focused));
@@ -299,7 +298,7 @@ function findAllMatchingElements(context, state, description, type) {
 
     var matchesByDocumentPosition = stable(matches,
         function(a, b){
-            return a[1].compareDocumentPosition(b[1]) & 2 ? -1 : 1;
+            return a[0] === b[0] ? a[1].compareDocumentPosition(b[1]) & 2 ? -1 : 1 : 0;
         }
     );
 
@@ -316,6 +315,7 @@ function findAllMatchingElements(context, state, description, type) {
         function(a, b){
             var aTypeIndex = typeSelectors.findIndex(type => a[1].matches(type));
             var bTypeIndex = typeSelectors.findIndex(type => b[1].matches(type));
+
             aTypeIndex = aTypeIndex < 0 ? Infinity : aTypeIndex;
             bTypeIndex = bTypeIndex < 0 ? Infinity : bTypeIndex;
             return aTypeIndex - bTypeIndex;

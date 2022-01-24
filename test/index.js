@@ -481,7 +481,7 @@ test('automage.changeValue - set the value of a date field', async t => {
 
     var window = await loadWindow();
 
-    var date = new Date();
+    var date = new Date('2022-01-01T12:00:00Z');
     var select = await automage.changeValue(window.document.body, 'date field', 'field', date);
 
     t.equal(new Date(select.value).toISOString().replace(/T.*/, ''), date.toISOString().replace(/T.*/, ''));
