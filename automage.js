@@ -526,7 +526,7 @@ function click(context, state, description, type, callback) {
         callback = type;
         type = description;
         description = state;
-        state = null;
+        state = 'enabled';
     }
 
     debug('click', state, description, type);
@@ -549,7 +549,7 @@ function click(context, state, description, type, callback) {
 
         element.click();
 
-        // Find closest button-like decendant
+        // Find closest button-like parent
         while(
             element &&
             (!element.matches || !element.matches(types.button.concat('input').join()))
