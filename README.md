@@ -50,6 +50,8 @@ var pageHeading = await automage.get(document.body, 'My test page', 'heading');
 await automage.click(document.body, 'I make UI', 'button');
 ```
 
+By default, the 'state' argument for `click` is set to `'enabled'`, and automage will not attempt to click `[disabled]` elements.
+
 By default, automage will wait for effects for 10ms (`automage.defaultClickWaitTimeout`), you can override this globally by setting it to your custom timeout, eg:
 
 ```javascript
