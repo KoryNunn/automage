@@ -14,9 +14,12 @@ var form = ['form', '[role=form]'];
 var row = ['tr', '[role=row]'];
 var article = ['[role=article]', 'article'];
 var region = ['[role=region]'];
-var dialog = ['[role=dialog]', '[role=alertdialog]', '[aria-modal]'];
+var dialog = ['[role=dialog]', '[aria-modal]', '[role=alertdialog]', '[role=alert]'];
+var alert = ['[role=alert]', '[role=alertdialog]', '[aria-modal]', '[role=dialog]'];
 var area = [section, form, article, region, dialog].flat();
 var navigation = ['[role=navigation]'];
+var progressbar = ['progress', '[role=progressbar]'];
+var status = ['[role=status]'];
 var all = ['*'];
 var text = ['p', 'section', 'article', 'aside', 'header', 'footer', 'span', 'div', '*'];
 var notLabel = [
@@ -29,7 +32,10 @@ var notLabel = [
         article,
         region,
         dialog,
+        alert,
         navigation,
+        progressbar,
+        status,
         section,
         header,
         footer,
@@ -64,9 +70,12 @@ module.exports = {
     article, // DOM Article elements.
     region, // UI with a role of 'region'.
     dialog, // UI with a role of 'dialog'.
+    alert, // UI with a role of 'alert'.
     area, // Logical UI area, eg form, section, etc..'.
     list, // Lists of items.
     navigation, // UI with a role of 'navigation'.
+    progressbar, // Things that describe progress.
+    status, // Things that describe status, like a loading spinner.
     all, // Any element. This is a very vague selector and usually wont do what you want.
     text // Things that usually hold text. This is a very vague selector and sometimes wont do what you want.
 };
