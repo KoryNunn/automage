@@ -22,29 +22,30 @@ var progressbar = ['progress', '[role=progressbar]'];
 var status = ['[role=status]'];
 var all = ['*'];
 var text = ['p', 'section', 'article', 'aside', 'header', 'footer', 'span', 'div', '*'];
-var notLabel = [
-        list,
-        item,
-        button,
-        link,
-        cell,
-        row,
-        article,
-        region,
-        dialog,
-        alert,
-        navigation,
-        progressbar,
-        status,
-        section,
-        header,
-        footer,
-        image,
-        form,
-        input
-    ]
-    .flatMap(typeList => typeList.map(type => `:not(${type})`))
-    .join('');
+var notLabel = `:not(${[
+            list,
+            item,
+            button,
+            link,
+            cell,
+            row,
+            article,
+            region,
+            dialog,
+            alert,
+            navigation,
+            progressbar,
+            status,
+            section,
+            header,
+            footer,
+            image,
+            form,
+            input
+        ]
+        .flatMap(typeList => typeList)
+        .join(',')
+    })`;
 var label = [
     `label${notLabel}`,
     `span${notLabel}`,
