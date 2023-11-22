@@ -1,4 +1,9 @@
 
+## 2.12.0 - Thu Nov 23 2023
+
+Improved handling of adjacent labeling, Added labeledBy state - [17c7f2d5](korynunn@17c7f2d50a12f615d5d229ab08fcdf0c81d793a3)
+
+
 ## 2.11.1 - Mon Nov 20 2023
 
 Shorten label selector because nwsapi breaks if selectors are too long - [69282fba](korynunn@69282fba767734a28f49645c2a0287825d025fa2)
