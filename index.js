@@ -187,12 +187,12 @@ function matchTextContent(element, description){
     }
 }
 
-function matchBesideLabels(element, description, onlyScanDecendants){
+function matchBesideLabels(element, description){
     if(
         element.previousElementSibling &&
         element.previousElementSibling.matches(types.label.join()) &&
         !element.previousElementSibling.hasAttribute('for') &&
-        checkMatchValue(getElementVisibleText(element.previousElementSibling), description, onlyScanDecendants)
+        checkMatchValue(getElementVisibleText(element.previousElementSibling), description)
     ) {
         return 4;
     }
@@ -288,7 +288,7 @@ function getElementValueWeight(element) {
     return valueWeighting.length - (index < 0 ? Infinity : index);
 }
 
-function findAllMatchingElements(context, state, description, type) {
+function findAllMatchingElements(context, state, description, type, bestType) {
     var typeSelectors = getTypeSelectors(type);
     var stateCheck = getStateCheck(state);
     var elements = Array.from(context.querySelectorAll(typeSelectors))
@@ -322,7 +322,10 @@ function findAllMatchingElements(context, state, description, type) {
         }
     );
 
-    var matchedElementsByTypePriority = matchesByTypePriority.map(result => result[1]);
+    var matchedElementsByTypePriority = matchesByTypePriority
+        .filter(match => (bestType && state !== 'labeledBy') ? match[0] === matchesByTypePriority[0][0] : true)
+        .map(result => result[1]);
+
     return matchedElementsByTypePriority
         .filter(element => stateCheck == null || stateCheck(element, matchedElementsByTypePriority));
 }
@@ -361,7 +364,7 @@ function find(context, state, description, type, callback) {
     var typeSelectors = getTypeSelectors(type);
 
     var result = righto.sync(elements => {
-        var matched = findAllMatchingElements(context, state, description, type);
+        var matched = findAllMatchingElements(context, state, description, type, true);
 
         if(!matched.length){
             return righto.fail(new Error(`${type} was not found matching "${description}"`));
@@ -396,7 +399,7 @@ function get(context, state, description, type, callback) {
     var typeSelectors = getTypeSelectors(type);
     var elements = righto(find, context, state, description, type);
     var result = righto.sync(() =>
-            findAllMatchingElements(context, state, description, type, true)
+            findAllMatchingElements(context, state, description, type, true, true)
         )
         .get(filterComponents.bind(null, typeSelectors))
         .get(elements => {

@@ -559,13 +559,23 @@ foundElement // Element was found
 ```
 
 
+## state filtering - labeledBy
+
+```
+var window = await loadWindow();
+
+var foundElement = await automage.get(window.document.body, 'labeledBy', 'Button with state', 'button');
+foundElement // Element was found
+```
+
+
 ## state filtering - first
 
 ```
 var window = await loadWindow();
 
-var foundElement = await automage.get(window.document.body, 'first', 'Button with state', 'button');
-foundElement // Element was found
+var foundElement = await automage.get(window.document.body, 'labeledBy', 'I label', 'label');
+foundElement.textContent === 'this label' // Correct element was found
 ```
 
 

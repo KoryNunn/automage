@@ -2,6 +2,7 @@
 module.exports = {
     enabled: element => !element.closest('[disabled]'),
     disabled: element => element.closest('[disabled]'),
+    labeledBy: (element, otherMatchedElements) => otherMatchedElements.length === 2 && element.previousElementSibling === otherMatchedElements[0],
     first: (element, otherMatchedElements) => otherMatchedElements[0] === element,
     last: (element, otherMatchedElements) => otherMatchedElements[otherMatchedElements.length - 1] === element,
     '(\\d+)(?:st|nd|rd)': (element, otherMatchedElements, parameters) => otherMatchedElements[parseInt(parameters[0]) - 1] === element,
@@ -24,31 +25,38 @@ var form = ['form', '[role=form]'];
 var row = ['tr', '[role=row]'];
 var article = ['[role=article]', 'article'];
 var region = ['[role=region]'];
-var dialog = ['[role=dialog]', '[role=alertdialog]', '[aria-modal]'];
+var dialog = ['[role=dialog]', '[aria-modal]', '[role=alertdialog]', '[role=alert]'];
+var alert = ['[role=alert]', '[role=alertdialog]', '[aria-modal]', '[role=dialog]'];
 var area = [section, form, article, region, dialog].flat();
 var navigation = ['[role=navigation]'];
+var progressbar = ['progress', '[role=progressbar]'];
+var status = ['[role=status]'];
 var all = ['*'];
 var text = ['p', 'section', 'article', 'aside', 'header', 'footer', 'span', 'div', '*'];
-var notLabel = [
-        list,
-        item,
-        button,
-        link,
-        cell,
-        row,
-        article,
-        region,
-        dialog,
-        navigation,
-        section,
-        header,
-        footer,
-        image,
-        form,
-        input
-    ]
-    .flatMap(typeList => typeList.map(type => `:not(${type})`))
-    .join('');
+var notLabel = `:not(${[
+            list,
+            item,
+            button,
+            link,
+            cell,
+            row,
+            article,
+            region,
+            dialog,
+            alert,
+            navigation,
+            progressbar,
+            status,
+            section,
+            header,
+            footer,
+            image,
+            form,
+            input
+        ]
+        .flatMap(typeList => typeList)
+        .join(',')
+    })`;
 var label = [
     `label${notLabel}`,
     `span${notLabel}`,
@@ -74,9 +82,12 @@ module.exports = {
     article, // DOM Article elements.
     region, // UI with a role of 'region'.
     dialog, // UI with a role of 'dialog'.
+    alert, // UI with a role of 'alert'.
     area, // Logical UI area, eg form, section, etc..'.
     list, // Lists of items.
     navigation, // UI with a role of 'navigation'.
+    progressbar, // Things that describe progress.
+    status, // Things that describe status, like a loading spinner.
     all, // Any element. This is a very vague selector and usually wont do what you want.
     text // Things that usually hold text. This is a very vague selector and sometimes wont do what you want.
 };
@@ -270,12 +281,12 @@ function matchTextContent(element, description){
     }
 }
 
-function matchBesideLabels(element, description, onlyScanDecendants){
+function matchBesideLabels(element, description){
     if(
         element.previousElementSibling &&
         element.previousElementSibling.matches(types.label.join()) &&
         !element.previousElementSibling.hasAttribute('for') &&
-        checkMatchValue(getElementVisibleText(element.previousElementSibling), description, onlyScanDecendants)
+        checkMatchValue(getElementVisibleText(element.previousElementSibling), description)
     ) {
         return 4;
     }
@@ -371,7 +382,7 @@ function getElementValueWeight(element) {
     return valueWeighting.length - (index < 0 ? Infinity : index);
 }
 
-function findAllMatchingElements(context, state, description, type) {
+function findAllMatchingElements(context, state, description, type, bestType) {
     var typeSelectors = getTypeSelectors(type);
     var stateCheck = getStateCheck(state);
     var elements = Array.from(context.querySelectorAll(typeSelectors))
@@ -405,7 +416,10 @@ function findAllMatchingElements(context, state, description, type) {
         }
     );
 
-    var matchedElementsByTypePriority = matchesByTypePriority.map(result => result[1]);
+    var matchedElementsByTypePriority = matchesByTypePriority
+        .filter(match => (bestType && state !== 'labeledBy') ? match[0] === matchesByTypePriority[0][0] : true)
+        .map(result => result[1]);
+
     return matchedElementsByTypePriority
         .filter(element => stateCheck == null || stateCheck(element, matchedElementsByTypePriority));
 }
@@ -444,7 +458,7 @@ function find(context, state, description, type, callback) {
     var typeSelectors = getTypeSelectors(type);
 
     var result = righto.sync(elements => {
-        var matched = findAllMatchingElements(context, state, description, type);
+        var matched = findAllMatchingElements(context, state, description, type, true);
 
         if(!matched.length){
             return righto.fail(new Error(`${type} was not found matching "${description}"`));
@@ -479,7 +493,7 @@ function get(context, state, description, type, callback) {
     var typeSelectors = getTypeSelectors(type);
     var elements = righto(find, context, state, description, type);
     var result = righto.sync(() =>
-            findAllMatchingElements(context, state, description, type, true)
+            findAllMatchingElements(context, state, description, type, true, true)
         )
         .get(filterComponents.bind(null, typeSelectors))
         .get(elements => {

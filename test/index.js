@@ -557,6 +557,15 @@ test('automage.get - adjacent cells don\'t label each-other', async t => {
     t.ok(foundElement, 'Element was found');
 });
 
+test('automage.get - adjacent elements of same type don\'t label each-other', async t => {
+    t.plan(1);
+
+    var window = await loadWindow();
+
+    var foundElement = await automage.get(window.document.body, 'I cant label', 'heading');
+    t.ok(foundElement, 'Element was found');
+});
+
 test('state filtering - enabled', async t => {
     t.plan(1);
 
@@ -573,6 +582,15 @@ test('state filtering - disabled', async t => {
 
     var foundElement = await automage.get(window.document.body, 'disabled', 'Button with state', 'button');
     t.ok(foundElement, 'Element was found');
+});
+
+test('state filtering - labeledBy', async t => {
+    t.plan(1);
+
+    var window = await loadWindow();
+
+    var foundElement = await automage.get(window.document.body, 'labeledBy', 'I label', 'label');
+    t.equal(foundElement.textContent, 'this label', 'Correct element was found');
 });
 
 test('state filtering - first', async t => {
