@@ -1,4 +1,9 @@
 
+## 2.13.0 - Sat Jul 20 2024
+
+Add overridable defaultRetryTimeout - [b85d7c57](korynunn@b85d7c5729156a20d331e557dcf64671406e3620)
+
+
 ## 2.12.0 - Thu Nov 23 2023
 
 Updated automage.js bundle - [a9e6f5d6](KoryNunn@a9e6f5d6e49fc1d784c1ffd5a4e1095e7f291c76)
