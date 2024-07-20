@@ -663,7 +663,7 @@ function waitFor(fn){
                     return callback(new Error(`${error.message} - Retrying timed out after ${timeout}ms`));
                 }
 
-                var retryWait = righto(wait, 10);
+                var retryWait = righto(wait, automage.defaultRetryTimeout);
 
                 righto(retry, righto.after(retryWait))(callback);
             });
@@ -678,6 +678,7 @@ function waitFor(fn){
 }
 
 var automage = {
+    defaultRetryTimeout: 10,
     defaultWaitTimeout: 100,
     defaultClickWaitTimeout: 10,
     defaultKeyPressWaitTimeout: 10,

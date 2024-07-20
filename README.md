@@ -30,6 +30,12 @@ The default timeout is 100ms (`automage.defaultWaitTimeout`), you can override t
 automage.defaultWaitTimeout = 200;
 ```
 
+The default retry time is 10ms (`automage.defaultRetryTimeout`), you can override this globally by setting it to your custom timeout, eg:
+
+```javascript
+automage.defaultRetryTimeout = 50;
+```
+
 All methods either return a promise, or accept an optional callback, eg:
 
 ```javascript

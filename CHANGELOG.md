@@ -1,6 +1,8 @@
 
 ## 2.12.0 - Thu Nov 23 2023
 
+Updated automage.js bundle - [a9e6f5d6](KoryNunn@a9e6f5d6e49fc1d784c1ffd5a4e1095e7f291c76)
+
 Improved handling of adjacent labeling, Added labeledBy state - [17c7f2d5](korynunn@17c7f2d50a12f615d5d229ab08fcdf0c81d793a3)
 
 
