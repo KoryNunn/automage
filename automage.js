@@ -101,9 +101,7 @@ var states = require('./elementStates');
 var clickWeighting = ['button, [role=button], [type=button], a', 'input', 'h1, h2, h3, h4', 'i', 'label'];
 var valueWeighting = ['input, textarea, select', '[contenteditable]', 'label'];
 
-var noElementOfType = 'no elements of type ';
-
-var nonTextInputs = ['date', 'range', 'select'];
+var nonTextInputs = ['date', 'datetime-local', 'range', 'select'];
 
 var hiddenSelector = '[hidden],[aria-hidden=true]';
 
@@ -220,7 +218,7 @@ function pressKeys(context, keys, callback) {
     return callback ? keysPressed(callback) : keysPressed;
 }
 
-function typeInto(context, state, description, type, value, callback) {
+function typeInto(context, state, description, type, value) {
     if(!(typeof value === 'string')) {
         callback = value;
         value = type;
@@ -230,10 +228,10 @@ function typeInto(context, state, description, type, value, callback) {
     }
 
     debug('typeInto', state, description, type);
-    var focused = righto(focus, context, state, description, type);
+    var focused = focus(context, state, description, type);
     var keysPressed = righto(pressKeys, context, value, righto.after(focused));
 
-    return callback ? keysPressed(callback) : keysPressed;
+    return keysPressed;
 }
 
 function checkMatchValue(targetValue, description){
@@ -424,9 +422,8 @@ function findAllMatchingElements(context, state, description, type, bestType) {
         .filter(element => stateCheck == null || stateCheck(element, matchedElementsByTypePriority));
 }
 
-function findAll(context, state, description, type, callback){
+function findAll(context, state, description, type){
     if(!(typeof type === 'string')) {
-        callback = type;
         type = description;
         description = state;
         state = null;
@@ -434,20 +431,17 @@ function findAll(context, state, description, type, callback){
 
     debug('findAll', state, description, type);
 
-    var typeSelectors = getTypeSelectors(type);
-
     var results = righto.from(null).get(() => {
         var matched = findAllMatchingElements(context, state, description, type);
 
         return matched;
     });
 
-    return callback ? results(callback) : results;
+    return results;
 }
 
-function find(context, state, description, type, callback) {
+function find(context, state, description, type) {
     if(!(typeof type === 'string')) {
-        callback = type;
         type = description;
         description = state;
         state = null;
@@ -457,17 +451,18 @@ function find(context, state, description, type, callback) {
 
     var typeSelectors = getTypeSelectors(type);
 
-    var result = righto.sync(elements => {
+    var result = righto.sync(() => {
         var matched = findAllMatchingElements(context, state, description, type, true);
 
         if(!matched.length){
-            return righto.fail(new Error(`${type} was not found matching "${description}"`));
+            const error = new Error(`${type} was not found matching "${description}"`);
+            return righto.fail(error);
         }
 
         return matched.filter(element => element.matches(typeSelectors));
     });
 
-    return callback ? result(callback) : result;
+    return result;
 }
 
 function filterComponents(elementTypes, elements){
@@ -480,9 +475,8 @@ function filterComponents(elementTypes, elements){
     }, [])
 }
 
-function get(context, state, description, type, callback) {
+function get(context, state, description, type) {
     if(!(typeof type === 'string')) {
-        callback = type;
         type = description;
         description = state;
         state = null;
@@ -491,7 +485,6 @@ function get(context, state, description, type, callback) {
     debug('get', state, description, type);
 
     var typeSelectors = getTypeSelectors(type);
-    var elements = righto(find, context, state, description, type);
     var result = righto.sync(() =>
             findAllMatchingElements(context, state, description, type, true, true)
         )
@@ -507,12 +500,11 @@ function get(context, state, description, type, callback) {
             return elements[0];
         })
 
-    return callback ? result(callback) : result;
+    return result;
 }
 
-function isMissing(context, state, description, type, callback) {
+function isMissing(context, state, description, type) {
     if(!(typeof type === 'string')) {
-        callback = type;
         type = description;
         description = state;
         state = null;
@@ -520,7 +512,7 @@ function isMissing(context, state, description, type, callback) {
 
     debug('isMissing', state, description, type);
 
-    var foundElements = righto(findAll, context, state, description, type);
+    var foundElements = findAll(context, state, description, type);
 
     var result = foundElements.get(result =>
         result.length
@@ -528,23 +520,22 @@ function isMissing(context, state, description, type, callback) {
         : true
     );
 
-    return callback ? result(callback) : result;
+    return result;
 }
 
 function wait(time, callback) {
     setTimeout(callback, time || 0);
 }
 
-function click(context, state, description, type, callback) {
+function click(context, state, description, type) {
     if(!(typeof type === 'string')) {
-        callback = type;
         type = description;
         description = state;
         state = 'enabled';
     }
 
     debug('click', state, description, type);
-    var clickTargets = righto(findAll, context, state, description, type);
+    var clickTargets = findAll(context, state, description, type);
     var clickedElement = clickTargets.get(elements => {
         var sorted = elements.sort((a, b) => getElementClickWeight(b) - getElementClickWeight(a));
 
@@ -580,19 +571,18 @@ function click(context, state, description, type, callback) {
     var waitForEffect = righto(wait, automage.defaultClickWaitTimeout);
     var result = righto.mate(clickedElement, righto.after(waitForEffect));
 
-    return callback ? result(callback) : result;
+    return result;
 }
 
-function focus(context, state, description, type, callback) {
+function focus(context, state, description, type) {
     if(!(typeof type === 'string')) {
-        callback = type;
         type = description;
         description = state;
         state = null;
     }
     
     debug('focus', state, description, type);
-    var elements = righto(findAll, context, state, description, type)
+    var elements = findAll(context, state, description, type)
 
     var focuesdElement = elements.get(elements => {
         var result = elements
@@ -610,7 +600,7 @@ function focus(context, state, description, type, callback) {
         return result;
     });
 
-    return callback ? focuesdElement(callback) : focuesdElement;
+    return focuesdElement;
 }
 
 function changeInputValue(element, value, callback){
@@ -648,6 +638,12 @@ function encodeDateValue(date){
     return value;
 }
 
+function encodeDatetimeLocalValue(date){
+    date = new Date(date);
+    var tzoffset = (new Date()).getTimezoneOffset() * 60000;
+    return (new Date(date - tzoffset)).toISOString().slice(0, -1);
+}
+
 function changeContenteditableValue(element, value, callback) {
     element.textContent = value;
     callback(null, element);
@@ -662,6 +658,7 @@ function encodeSelectValue(label, element){
 
 var typeEncoders = {
     date: encodeDateValue,
+    'datetime-local': encodeDatetimeLocalValue,
     'select-one': encodeSelectValue
 };
 
@@ -677,9 +674,8 @@ function changeNonTextInput(element, value, callback){
     changeInputValue(element, value, callback);
 }
 
-function changeValue(context, state, description, type, value, callback) {
+function changeValue(context, state, description, type, value) {
     if(!(typeof value === 'string')) {
-        callback = value;
         value = type;
         type = description;
         description = state;
@@ -687,7 +683,7 @@ function changeValue(context, state, description, type, value, callback) {
     }
 
     debug('changeValue', state, description, type);
-    var focusedElement = righto(focus, context, state, description, type);
+    var focusedElement = focus(context, state, description, type);
     var valueChangedElement = focusedElement.get(element => {
         if(
             element.nodeName === 'INPUT' && ~nonTextInputs.indexOf(element.type) ||
@@ -717,7 +713,7 @@ function changeValue(context, state, description, type, value, callback) {
         return elementChanged;
     });
 
-    return callback ? valueChangedElement(callback) : valueChangedElement;
+    return valueChangedElement;
 }
 
 function blur(context, callback) {
@@ -730,8 +726,28 @@ function blur(context, callback) {
     return callback ? result(callback) : result;
 }
 
+function formatHTML(html) {
+    var tab = '\t';
+    var result = '';
+    var indent= '';
+
+    html.split(/>\s*</).forEach(function(element) {
+        if (element.match( /^\/\w/ )) {
+            indent = indent.substring(tab.length);
+        }
+
+        result += indent + '<' + element + '>\r\n';
+
+        if (element.match( /^<?\w[^>]*[^\/]$/ ) && !element.startsWith("input")  ) { 
+            indent += tab;              
+        }
+    });
+
+    return result.substring(1, result.length-3);
+}
+
 function waitFor(fn){
-    return function(...args){
+    return function(context, ...args){
         var timeoutIndex = args.length-1;
 
         if(typeof args[timeoutIndex] === 'function') {
@@ -750,11 +766,17 @@ function waitFor(fn){
             callback = args.pop();
         }
 
-
         function retry(callback){
-            var result = righto.handle(righto(fn, ...args), (error, callback) => {
+            if(!context.ownerDocument.contains(context)){
+                var error = new Error(`the provided Context is not in the Document\n\nContext: \n${formatHTML(context.outerHTML)}\n`);
+                return callback(error);
+            }
+
+            var result = righto.handle(fn(context, ...args), (error, callback) => {
                 if(Date.now() - startTime > timeout){
-                    return callback(new Error(`${error.message} - Retrying timed out after ${timeout}ms`));
+                    var error = new Error(`${error.message} - Retrying timed out after ${timeout}ms`);
+                    error.contextHTML = formatHTML(context.outerHTML);
+                    return callback(error);
                 }
 
                 var retryWait = righto(wait, automage.defaultRetryTimeout);
