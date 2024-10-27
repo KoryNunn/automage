@@ -4,7 +4,7 @@
   "description": "Interact with DOM like a human.",
   "main": "index.js",
   "scripts": {
-    "test": "c8 --check-coverage --lines 100 -- node test",
+    "test": "c8 --check-coverage --lines 100 --branches 95 -- node test",
     "bundle": "browserify index.js --standalone automage > automage.js",
     "changelog": "git log | chlogit > CHANGELOG.md"
   },

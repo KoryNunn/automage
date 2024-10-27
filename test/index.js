@@ -39,6 +39,20 @@ test('automage.get - select a heading', async t => {
     t.ok(pageHeading, 'Page heading was found');
 });
 
+test('automage.get - cant use a context that isnt in the document', async t => {
+    t.plan(1);
+
+    var window = await loadWindow();
+
+    const detachedContext = window.document.createElement('div');
+
+    try {
+        await automage.get(detachedContext, 'My hidden text', 'text');
+    } catch (error) {
+        t.equal(error.message, 'the provided Context is not in the Document\n\nContext: \n<div>\r\n</div>\n')
+    }
+});
+
 test('automage.get - use a callback', async t => {
     t.plan(1);
 
@@ -483,6 +497,17 @@ test('automage.changeValue - set the value of a date field', async t => {
 
     var date = new Date('2022-01-01T12:00:00Z');
     var select = await automage.changeValue(window.document.body, 'date field', 'field', date);
+
+    t.equal(new Date(select.value).toISOString().replace(/T.*/, ''), date.toISOString().replace(/T.*/, ''));
+});
+
+test('automage.changeValue - set the value of a datetime-local field', async t => {
+    t.plan(1);
+
+    var window = await loadWindow();
+
+    var date = new Date('2022-01-01T12:00:00Z');
+    var select = await automage.changeValue(window.document.body, 'datetime-local field', 'field', date);
 
     t.equal(new Date(select.value).toISOString().replace(/T.*/, ''), date.toISOString().replace(/T.*/, ''));
 });
