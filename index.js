@@ -673,15 +673,15 @@ function waitFor(fn){
         }
 
         function retry(callback){
-            if(!context.ownerDocument.contains(context)){
-                var error = new Error(`the provided Context is not in the Document\n\nContext: \n${formatHTML(context.outerHTML)}\n`);
+            if(!getDocument(context).contains(context)){
+                var error = new Error(`the provided Context is not in the Document\n\nContext: \n${(context && context.outerHTML) ? formatHTML(context.outerHTML) : context}\n`);
                 return callback(error);
             }
 
             var result = righto.handle(fn(context, ...args), (error, callback) => {
                 if(Date.now() - startTime > timeout){
                     var error = new Error(`${error.message} - Retrying timed out after ${timeout}ms`);
-                    error.contextHTML = formatHTML(context.outerHTML);
+                    error.contextHTML = (context && context.outerHTML) ? formatHTML(context.outerHTML) : context;
                     return callback(error);
                 }
 
